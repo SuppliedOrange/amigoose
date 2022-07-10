@@ -1,0 +1,1 @@
+py -m src.app.run
