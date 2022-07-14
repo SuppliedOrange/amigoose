@@ -19,7 +19,9 @@ def homeLayout ():
          sg.Button("open",font=(defaultFont,23), button_color= buttonColor, border_width=0, key="home_open_opensub")],
         [sg.HSep()],
         [sg.Column(
-            [*lp.imagePostCard(*userDB["postData"].getPostsBy(author="ducko"))],
+            [*lp.postCardHandler(
+                *[x[2] for x in userDB["postData"].getPostsBy(author="ducko")]
+                )],
             scrollable=True, vertical_scroll_only=True, expand_x=True, expand_y=True, sbar_relief=sg.RELIEF_FLAT
         )]
     ]
@@ -27,6 +29,7 @@ def homeLayout ():
     return homeLayout
 
 def homeExec(event,values,window):
+
     # Dealing with window/tab open events
     if (event == "home_open_settings"):
         externalFuncs.moveTab(window,"tabgroup","homeTab","settingsTab")
@@ -47,7 +50,7 @@ def homeExec(event,values,window):
 def postFunctionHandler(event,values,window):
 
     userDB = externalFuncs.initUserDB()
-    method, value = None, None if len(event.split("_")) != 2 else event.split("_")
+    method, value = (None, None) if len(event.split("_")) != 2 else event.split("_")
 
     if (method == "postOpenUser"):
         from src.app.profile.profile import profile
@@ -57,10 +60,10 @@ def postFunctionHandler(event,values,window):
         from src.app.subreddit.subreddit import subreddit
         subreddit.start(argsWindow=value)
     
-    elif (method == "imagePostHonk"):
+    elif (method == "postHonk"):
         id = postIdentityExtractor(value)
         userDB["postData"].toggleHonk(id["author"], id["uuid"], id["subreddit"])
-        window["imagePostHonks_" + value].update( str(userDB["postData"].getHonks(id["uuid"])) )
+        window["postHonks_" + value].update( str(userDB["postData"].getHonks(id["uuid"])) )
         if (userDB["postData"].checkHonk(id["author"],id["uuid"])):
             externalFuncs.playHonk()
         
@@ -69,7 +72,12 @@ def postFunctionHandler(event,values,window):
         image_path = userDB["postData"].getPost(uuid=id["uuid"], column="resourceLink")[0]
         from src.app.post.openPostImage import openPostImage
         openPostImage.start(argsWindow=image_path)
-        
+    
+    elif (method == "videoPostOpen"):
+        id = postIdentityExtractor(value)
+        video_path = userDB["postData"].getPost(uuid=id["uuid"], column="resourceLink")[0]
+        from src.app.post.openPostVideo import openPostVideo
+        openPostVideo.start(argsWindow=video_path)
 
 
 def postIdentityExtractor(id):

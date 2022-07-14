@@ -26,7 +26,7 @@ def openPostImageWindow(imagePath, parent=None):
         )]
     ]
 
-    window = sg.Window(externalFuncs.getBasename(imagePath), openPostImageLayout.copy(), size=(imagewidth,imageheight), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo(), metadata={
+    window = sg.Window(externalFuncs.getBasename("Expanding an image post"), openPostImageLayout.copy(), size=(imagewidth,imageheight), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo(), metadata={
         "parent": parent,
         "imageBasename": imageBasename
     })

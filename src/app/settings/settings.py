@@ -90,6 +90,4 @@ def checkAndApply(values,window):
     from src.app.home.home import home
     home.stop(restart=True)
 
-
-
 settings = externalFuncs.TabElement(exec=settingsExec,layout=settingsLayout)

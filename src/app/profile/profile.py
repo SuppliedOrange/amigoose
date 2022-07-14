@@ -35,7 +35,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
     tabs = [
         sg.Tab("Profile - " + username,profileLayout,key='profileTab'),
         sg.Tab("Posts - " + username, posts.getLayout(username), key="postsTab"),
-        sg.Tab("Comments -" + username, comments.getLayout(username), key="commentsTab")
+        sg.Tab("Comments - " + username, comments.getLayout(username), key="commentsTab")
     ]
 
     profileLayout = [[sg.TabGroup([tabs], key='profileTabgroup', expand_x=True, expand_y=True)]]

@@ -75,7 +75,7 @@ def createPostTextWatch(window):
             return (True, True)
 
     if window and values:
-        charlength = f"{len(values)}/1000"
+        charlength = f"{len(values['createPostText_content'])}/1000"
         charlengthcolor = "blue" if checkContentLength(values) else "red"
         window["createPostText_charlength"].update(charlength,text_color=charlengthcolor)
 

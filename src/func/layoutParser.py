@@ -108,21 +108,30 @@ def textPostCard(*params):
     megaphoneButton = externalFuncs.getButton("megaphone")
     buttonColor = ("white" if externalFuncs.isThemeDark() else "black", sg.theme_background_color())
     userDB = externalFuncs.initUserDB()
+
     for param in params:
         author = param[0]
         subreddit = param[1]
         uuid = param[2]
+
         dataFile = externalFuncs.getPath(f'./subreddits/posts/{subreddit}/{author}+{uuid}.dat')
         identity = author + "-" + uuid + "-" + subreddit
         f = open(dataFile,"rb")
         data = pickle.load(f)
+        if data["type"] != "text": continue
+
+        w,h = sg.Window.get_screen_size()
+        w,h = int(w/20), int(h/len(data["body"])//10)
+
         postCard = [
             [sg.Text(data["title"], font=(defaultFont,23)), sg.Push(), sg.Text('By:', font=(defaultFont,15)), sg.Button("@" + data["author"], font=(defaultFont,15), button_color= buttonColor, border_width=0, key="postOpenUser_" + data["author"])],
-            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="textPostHonk_" + identity), sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="imagePostHonks_" + identity)],
-            [sg.Text(data["body"][0:100] + " ->")],
+            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="postHonk_" + identity), sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + identity)],
+            #[sg.Text(data["body"][0:100] + (" ->" if len(data["body"]) > 100 else ""), font=(defaultFont, 13))],
+            [sg.Text(data["body"], font=(defaultFont, 13), size= (w,h) )],
             [sg.HSep()]
         ]
         postCards.extend(postCard)
+
     return postCards
 
 def imagePostCard(*params):
@@ -131,26 +140,35 @@ def imagePostCard(*params):
     buttonColor = ("white" if externalFuncs.isThemeDark() else "black", sg.theme_background_color())
     megaphoneButton = externalFuncs.getButton("megaphone")
     userDB = externalFuncs.initUserDB()
+
     for param in params:
         author = param[0]
         subreddit = param[1]
         uuid = param[2]
         identity = author + "-" + uuid + "-" + subreddit
+
         dataFile = externalFuncs.getPath(f'./subreddits/posts/{subreddit}/{author}+{uuid}.dat')
         f = open(dataFile,"rb")
         data = pickle.load(f)
+        if data["type"] != "image": continue
+        
         postCard = [
             [sg.Text(data["title"], font=(defaultFont,23)), sg.Push(), sg.Button("@" + data["author"], font=(defaultFont,14), button_color= buttonColor, border_width=0, key="postOpenUser_" + data["author"]),
              sg.Button("g/" + data["subreddit"], font=(defaultFont,14), button_color= buttonColor, border_width=0, key="postOpenSubreddit_" + data["subreddit"])],
-            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="imagePostHonk_" + identity),
-             sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="imagePostHonks_" + identity)],
+            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="postHonk_" + identity),
+             sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + identity)],
             [sg.Button(image_data=imageFuncs.loadResizedImageB64(data["url"], 200), button_color= buttonColor, border_width=0, key="imagePostOpen_" + identity)],
             [sg.HSep()]
         ]
         postCards.extend(postCard)
+
     return postCards
         
 def videoPostCard(*params):
+
+    w,h = sg.Window.get_screen_size()
+    w,h = int(w/10.5), 1
+
     postCards = []
     defaultFont = externalFuncs.getDefaultFont()
     buttonColor = ("white" if externalFuncs.isThemeDark() else "black", sg.theme_background_color())
@@ -161,18 +179,24 @@ def videoPostCard(*params):
         subreddit = param[1]
         uuid = param[2]
         identity = author + "-" + uuid + "-" + subreddit
+
         dataFile = externalFuncs.getPath(f'./subreddits/posts/{subreddit}/{author}+{uuid}.dat')
         f = open(dataFile,"rb")
         data = pickle.load(f)
+        if data["type"] != "video": continue
+        
         postCard = [
             [sg.Text(data["title"], font=(defaultFont,23)), sg.Push(), sg.Button("@" + data["author"], font=(defaultFont,14), button_color= buttonColor, border_width=0, key="postOpenUser_" + data["author"]),
             sg.Button("g/" + data["subreddit"], font=(defaultFont,14), button_color= buttonColor, border_width=0, key="postOpenSubreddit_" + data["subreddit"])],
-            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="videoPostHonk_" + identity),
-             sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="videoPostHonks_" + identity)],
+            [sg.Push(), sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="postHonk_" + identity),
+             sg.Text(str(userDB["postData"].getHonks(uuid)), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + identity)],
             [sg.Button(image_data=imageFuncs.loadResizedImageB64( imageFuncs.getFirstFrameOfVideo(data["url"]), 200), button_color= buttonColor, border_width=0, key="videoPostOpen_" + identity)],
+            [sg.T("⠀" * 150, size=(w,h))],
             [sg.HSep()]
         ]
+
         postCards.extend(postCard)
+
     return postCards
 
 def postCardHandler(*uuids):
@@ -193,4 +217,5 @@ def postCardHandler(*uuids):
             cards.extend(imagePostCard(data))
         elif typeOfPost == "video":
             cards.extend(videoPostCard(data))
+
     return cards

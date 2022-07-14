@@ -85,11 +85,11 @@ def createPostTitleWatch(window):
             return (True,True)
 
     if window and values:
-        charlength = f"{len(values['createPost_title'])}/75"
+        charlength = f"{len(values['createPost_title'])}/60"
         charlengthcolor = "blue" if checkTitleLength(values["createPost_title"]) else "red"
         window["createPost_charlength"].update(charlength,text_color=charlengthcolor)
 
 def checkTitleLength(title):
-    return not ((len(title) > 75) or (len(title) < 1))
+    return not ((len(title) > 60) or (len(title) < 1))
 
 createPostTitle = externalFuncs.WinElement(createPostTitleWatch, window=createPostTitleWindow) 
