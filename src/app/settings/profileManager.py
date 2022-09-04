@@ -1,4 +1,3 @@
-from audioop import add
 import PySimpleGUI as sg
 from src.func import externalFuncs, imageFuncs
 from src.func.layoutParser import getSubredditsForUser

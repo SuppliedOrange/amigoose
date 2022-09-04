@@ -21,7 +21,7 @@ def openPostVideoWindow(videoPath, parent=None):
         [sg.Button(image_filename=back_button, image_subsample=12, button_color= buttonColor, border_width=0, key="openPostVideoClose_" + videoBasename)],
         [sg.Image('', size=(300, 170), key='videoStreamOutput')],
         [sg.Push(),
-         sg.Button(image_filename=playpause_button, image_subsample=12, button_color= buttonColor, border_width=0, key="openPostVideoPlayPause_" + videoBasename),
+         sg.Button(image_filename=playpause_button, image_subsample=10, button_color= buttonColor, border_width=0, key="openPostVideoPlayPause_" + videoBasename),
          sg.Push()]
     ]
 

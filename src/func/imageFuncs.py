@@ -15,8 +15,12 @@ def convertToPFP(imagePath,resize:tuple,cacheOutput:tuple=()):
     """
 
     # Checking for cache existence
-    if not cacheOutput:
-        basename = externalFuncs.getBasename(imagePath)
+    basename = externalFuncs.getBasename(imagePath)
+
+    illegalNames = ["defaultGoose.png", "goose.png", "joystick.png", "pizza.png", "travel.png"]
+
+    if not cacheOutput and not basename in illegalNames:
+
         subredditCache = externalFuncs.getPath("./assets/remote_assets/cache/subreddit_pfps/subreddit@" + basename)
         userCache = externalFuncs.getPath("./assets/remote_assets/cache/user_pfps/user@" + basename)
 
@@ -116,7 +120,8 @@ def loadResizedImageB64(imagePath, thresholdPixels):
     imagePath - string - Path to the image
     """
     w,h = getImageDimensions(imagePath)
-    y = w if w > h else h
+    y = max({w,h})
+    #y = w if w > h else h
     y = (y // thresholdPixels) or 1
     w,h = [int(x / y) for x in (w,h)]
     return convertToB64(resizeImage(imagePath,(w,h),save=True))

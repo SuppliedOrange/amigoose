@@ -1,4 +1,3 @@
-from email.mime import image
 import PySimpleGUI as sg
 from src.func import externalFuncs, imageFuncs
 

@@ -98,7 +98,7 @@ subreddits = Format(
     name varchar(255) PRIMARY KEY,
     description varchar(255),
     owner varchar(255) NOT NULL,
-    dateCreated int unsigned NOT NULL
+    dateCreated int unsigned
     """,
 
     "(name, description, owner, dateCreated)"
@@ -109,11 +109,11 @@ postmaps = Format(
 
     """
     author varchar(255) NOT NULL,
-    subreddit varchar(255) NOT NULL,
+    subreddit varchar(255),
     uuid varchar(255) NOT NULL,
     honks int DEFAULT 0,
     resourceLink varchar(255),
-    dateCreated int unsigned NOT NULL
+    dateCreated int unsigned
     """,
 
     "(author, subreddit, uuid, resourceLink, dateCreated)"
@@ -124,12 +124,26 @@ honkLogs = Format(
 
     """
     author varchar(255) NOT NULL,
-    subreddit varchar(255) NOT NULL,
+    subreddit varchar(255),
     uuid varchar(255) NOT NULL
     """,
 
     "(author, subreddit, uuid)"
 )
+
+comments = Format(
+    "comments",
+
+    """
+    author varchar(255) NOT NULL,
+    uuid varchar(255) NOT NULL,
+    content varchar(255) DEFAULT "",
+    dateCreated int unsigned
+    """,
+
+    "(author, uuid, content, dateCreated)"
+)
+
 
 # Database-table map
 formats = {
@@ -151,6 +165,7 @@ formats = {
     "postdata": {
         "subreddits": subreddits,
         "postmaps": postmaps,
-        "honkLogs": honkLogs
+        "honkLogs": honkLogs,
+        "comments": comments
     }
 }

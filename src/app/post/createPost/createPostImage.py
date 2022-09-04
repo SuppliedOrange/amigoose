@@ -27,7 +27,7 @@ def createPostImageWindow(title,parent):
         [sg.VPush()],
         [sg.Text("No image selected",text_color="red",key="createPostImage_filepath_name"), sg.Push(), sg.Button(image_filename=confirm_button, image_subsample=15, button_color=buttonColor,border_width=0,key="createPostImage_confirm")]
     ]
-    window = sg.Window("Creating a post..." , profileLayout.copy(), size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"), icon=imageFuncs.getLogo(), metadata={
+    window = sg.Window("Creating a post..." , profileLayout.copy(), size=(width,height), alpha_channel=userDB["settings"].getPreference("opacity"), icon=imageFuncs.getLogo(), resizable=True, metadata={
         "parent": parent,
         "title": title
     })

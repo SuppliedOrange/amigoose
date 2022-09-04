@@ -28,7 +28,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
          sg.Button(image_filename=comment_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile_open_comments-" + username)],
         [sg.Image(pfp), sg.Push(), sg.Text(username, font=(defaultFont,40))],
         [sg.T('')],
-        [sg.Text("Joined: " + date_join, font=(defaultFont,12)), sg.Push(), sg.Text("Honks: " + str(userDB["userData"].getProfileData("honks")[0]), font=(defaultFont,12))],
+        [sg.Text(f"Joined: {date_join}" , font=(defaultFont,12)), sg.Push(), sg.Text("Honks: " + str(userDB["userData"].getProfileData("honks")[0]), font=(defaultFont,12))],
         [sg.Text(f"\"{bio}\"" if bio else "", font=(defaultFont,12), size=(50,30))]
     ]
 

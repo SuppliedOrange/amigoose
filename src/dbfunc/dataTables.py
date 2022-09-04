@@ -179,22 +179,31 @@ class postData(dataTables):
         sf.selectDB("postData")
         sf.insertData("postmaps", (author, subreddit, uuid, resourceLink, dateCreated))
 
-    def getPostsBy(self, subreddit=None, author=None):
+    def getPostsBy(self, subreddit=None, author=None, uuid=None, fetchAll=True, column="*"):
         sf.selectDB("postData")
         queries = ""
         if (subreddit):
             queries += f' WHERE subreddit = "{subreddit}" '
         if (author):
-            if (subreddit): queries += "AND"
+            if (queries): queries += "AND"
             queries += f' WHERE author = "{author}" '
-        if not subreddit and not author:
-            return None
-        return sf.executeSQL("SELECT * FROM POSTMAPS" + queries + "ORDER BY dateCreated DESC").fetchall()
+        if (uuid):
+            if (queries): queries += "AND"
+            queries += f' WHERE uuid = "{uuid}" '
 
+        if not subreddit and not author and not uuid:
+            return None
+
+        result = sf.executeSQL("SELECT " + column + " FROM POSTMAPS" + queries + "ORDER BY dateCreated DESC")
+        return result.fetchall() if fetchAll else result.fetchone()
+
+    '''
     def getPost(self, uuid, column="*"):
         sf.selectDB("postData")
         post = sf.getData("postmaps", ("uuid",uuid), column)
         return post
+        #Removed this, check if it causes problems.
+    '''
 
     def deletePost(self, author, uuid, subreddit, resourceLink):
         sf.selectDB("postData")
@@ -221,3 +230,15 @@ class postData(dataTables):
         else:
             sf.deleteData("honkLogs", ("author", author), ("uuid", uuid))
             return False # Removed honk
+        
+    # Comment stuff
+
+    def getCommentsForPost(self, uuid):
+        sf.selectDB("postData")
+        comments = sf.executeSQL(f"select * from comments where uuid = '{uuid}' order by dateCreated desc")
+        commentPool = []
+        commentTitles = ["author", "uuid", "content", "dateCreated"]
+        for comment in comments:
+            comment = dict(zip(commentTitles, comment))
+            commentPool.append(comment)
+        return commentPool

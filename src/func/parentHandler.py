@@ -28,3 +28,11 @@ def parentHandler(parent:dict):
     elif parentType == "createPostTitle":
         from src.app.post.createPost.createPostTitle import createPostTitle
         createPostTitle.start(argsWindow=layoutArgs, argsWatch=watchArgs)
+    
+    elif parentType == "viewPostText":
+        from src.app.post.viewPost.viewPostText import viewPostText
+        viewPostText.start(argsWindow=layoutArgs, argsWatch=watchArgs)
+    
+    elif parentType == "viewPostImage":
+        from src.app.post.viewPost.viewPostImage import viewPostImage
+        viewPostImage.start(argsWindow=layoutArgs, argsWatch=watchArgs)

@@ -31,7 +31,7 @@ def createPostTitleWindow(subreddit,existing_title=None,parent=None):
          sg.Button(image_filename=videoPostButton, image_subsample=4, button_color= buttonColor, border_width=0, key="createPost_createVideoPost"), 
          sg.Push()],
     ]
-    window = sg.Window("Creating a post..." , profileLayout.copy(), size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"), icon=imageFuncs.getLogo(), metadata={
+    window = sg.Window("Creating a post..." , profileLayout.copy(), size=(width,height), alpha_channel=userDB["settings"].getPreference("opacity"), icon=imageFuncs.getLogo(), metadata={
         "parent": parent,
         "subreddit": subreddit
     })

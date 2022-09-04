@@ -1,3 +1,4 @@
+from ast import NameConstant
 import PySimpleGUI as sg
 from src.func import externalFuncs, imageFuncs, parentHandler
 from datetime import datetime
@@ -6,7 +7,7 @@ from . import top, new
 
 def subredditWindow(subreddit,openTab=None,parent=None):
     if not externalFuncs.isSubreddit(subreddit):
-        return (False, "Subreddit does not exist")
+        raise SubredditNotFound(f"Subreddit {subreddit} does not exist")
 
     width, height = [int(x/1.5) for x in sg.Window.get_screen_size()]
     openTab = openTab or "subredditTab"
@@ -74,6 +75,9 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     return window
 
 def subredditWatch(window):
+
+    if type(window) == tuple and not window[0]:
+        raise Exception
     
     event,values = window.read(100)
     event = externalFuncs.sanitizeEvent(event)
@@ -140,3 +144,6 @@ def subredditWatch(window):
     new.new.exec(*v)
 
 subreddit = externalFuncs.WinElement(subredditWatch, window=subredditWindow)
+
+class SubredditNotFound(Exception):
+    pass

@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from src.func import externalFuncs, imageFuncs
+from src.func import externalFuncs
 from src.func import layoutParser as lp
 
 def homeLayout ():
@@ -44,48 +44,7 @@ def homeExec(event,values,window):
         opensub.start()
     
     # Dealing with post stuff
-    postFunctionHandler(event,values,window)
+    externalFuncs.postFunctionHandler(event,values,window)
 
-
-def postFunctionHandler(event,values,window):
-
-    userDB = externalFuncs.initUserDB()
-    method, value = (None, None) if len(event.split("_")) != 2 else event.split("_")
-
-    if (method == "postOpenUser"):
-        from src.app.profile.profile import profile
-        profile.start(argsWindow=value)
-
-    elif (method == "postOpenSubreddit"):
-        from src.app.subreddit.subreddit import subreddit
-        subreddit.start(argsWindow=value)
-    
-    elif (method == "postHonk"):
-        id = postIdentityExtractor(value)
-        userDB["postData"].toggleHonk(id["author"], id["uuid"], id["subreddit"])
-        window["postHonks_" + value].update( str(userDB["postData"].getHonks(id["uuid"])) )
-        if (userDB["postData"].checkHonk(id["author"],id["uuid"])):
-            externalFuncs.playHonk()
-        
-    elif (method == "imagePostOpen"): 
-        id = postIdentityExtractor(value)
-        image_path = userDB["postData"].getPost(uuid=id["uuid"], column="resourceLink")[0]
-        from src.app.post.openPostImage import openPostImage
-        openPostImage.start(argsWindow=image_path)
-    
-    elif (method == "videoPostOpen"):
-        id = postIdentityExtractor(value)
-        video_path = userDB["postData"].getPost(uuid=id["uuid"], column="resourceLink")[0]
-        from src.app.post.openPostVideo import openPostVideo
-        openPostVideo.start(argsWindow=video_path)
-
-
-def postIdentityExtractor(id):
-    author, uuid, subreddit = id.split("-")
-    return {
-        "author": author,
-        "uuid": uuid,
-        "subreddit": subreddit
-    }
 
 hlg = externalFuncs.TabElement(exec=homeExec, layout=homeLayout)
