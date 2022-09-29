@@ -1,6 +1,5 @@
-from ast import NameConstant
 import PySimpleGUI as sg
-from src.func import externalFuncs, imageFuncs, parentHandler
+from src.func import externalFuncs, imageFuncs as imf, parentHandler
 from datetime import datetime
 
 from . import top, new
@@ -16,7 +15,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     buttonColor = ("white" if externalFuncs.isThemeDark() else "black", sg.theme_background_color())
 
     userDB = externalFuncs.initUserDB()
-    icon = imageFuncs.convertToPFP( imageFuncs.getIcon(subreddit) ,(200,200), cacheOutput=(subreddit, "subreddit"))
+    icon = imf.convertToB64( imf.convertToPFP( imf.getIcon(subreddit) ,(200,200), cacheOutput=(subreddit, "subreddit")) )
     date_created = datetime.utcfromtimestamp( userDB["postData"].getSubreddits(subreddit, "dateCreated")[0] ).strftime("%d/%m/%Y")
     owner = userDB["postData"].getSubreddits(subreddit, "owner")[0]
     description = userDB["postData"].getSubreddits(subreddit, "description")[0]
@@ -27,7 +26,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     isNotOwner = (userDB["dataTables"].username != owner)
 
     # If the user is not the owner of the subreddit, load an image of the subreddit icon for them, otherwise load a button with the subreddit icon
-    iconButton = sg.Image(filename=icon) if isNotOwner else sg.Button(image_filename=icon,button_color=buttonColor, border_width=0, key="subreddit_update_icon-" + subreddit)
+    iconButton = sg.Image(data=icon) if isNotOwner else sg.Button(image_data=icon,button_color=buttonColor, border_width=0, key="subreddit_update_icon-" + subreddit)
     # Header = [iconButton/iconImage + push + subreddit name]
     header = [iconButton, sg.Push(), sg.Text("g/" + subreddit, font=(defaultFont,40))]
 
@@ -45,6 +44,18 @@ def subredditWindow(subreddit,openTab=None,parent=None):
         [sg.Button("By @" + owner, button_color=buttonColor,border_width=0,font=(defaultFont,15), key="subreddit_open_profile-" + owner)],
         [sg.Text("On " + date_created,font=(defaultFont,15))]
     ]
+
+    def BT(subreddit): # BT = Button Type
+            inSubreddit = subreddit in userDB["userData"].getSubredditData("subreddit")
+            return {
+                "actionProtocol": "subreddit_leave_subreddit-" if inSubreddit else "subreddit_join_subreddit-",
+                "actionColor": ("white","red") if inSubreddit else ("white", "green"),
+                "subredditColor":("white", sg.theme_background_color()) if externalFuncs.isThemeDark() else ("black", sg.theme_background_color()),
+                "actionText": "Leave" if inSubreddit else "Join"
+            }
+
+    join_and_leave_button = [sg.Push(), sg.Button( BT(subreddit)["actionText"], button_color= BT(subreddit)["actionColor"], font= (defaultFont, 14), key=BT(subreddit)["actionProtocol"] + subreddit )]
+
     description.append(sg.Frame("", details, element_justification="c"))
 
     subredditLayout = [
@@ -53,7 +64,8 @@ def subredditWindow(subreddit,openTab=None,parent=None):
          sg.Button("new", font=(defaultFont,28), button_color=buttonColor, border_width=0, key="subreddit_open_new-" + subreddit), sg.Button("top", font=(defaultFont,28), button_color = buttonColor, border_width=0, key="subreddit_open_top-" + subreddit)],
         header,
         [sg.T()],
-        description
+        join_and_leave_button,
+        description,
     ]
 
     tabs = [
@@ -63,7 +75,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     ]
 
     subredditLayout = [[sg.TabGroup([tabs], key='subredditTabgroup', expand_x=True, expand_y=True)]]
-    window = sg.Window("g/" + subreddit , subredditLayout.copy(),size=(width,height), resizable=True, alpha_channel=externalFuncs.getWindowOpacity(), icon=imageFuncs.getLogo(), metadata={
+    window = sg.Window("g/" + subreddit , subredditLayout.copy(),size=(width,height), resizable=True, alpha_channel=externalFuncs.getWindowOpacity(), icon=imf.getLogo(), metadata={
         "tabs": list(map(lambda x: x.Key ,tabs)),
         "subreddit": subreddit,
         "parent": parent
@@ -80,11 +92,13 @@ def subredditWatch(window):
         raise Exception
     
     event,values = window.read(100)
+    
     event = externalFuncs.sanitizeEvent(event)
 
     method,value = event.split("-") if event and "-" in event else (None,None)
 
     if value == window.metadata["subreddit"]:
+        EventName = event
         event = method
 
     # Standard events (directly linked to subreddit)
@@ -106,12 +120,22 @@ def subredditWatch(window):
 
     elif (event == "subreddit_update_icon"):
         fileName = sg.popup_get_file("Choose a subreddit icon",no_window=True)
-        if not imageFuncs.checkImage(fileName):
+        if not imf.checkImage(fileName):
             sg.popup_quick_message("Not an image file! Honk!")
         else:
-            newPFP = imageFuncs.convertToPFP(imageFuncs.saveAsPFP(fileName, window.metadata["subreddit"], subreddit=True), (200,200), cacheOutput=(subreddit, "subreddit"))
-            window[event + "-" + window.metadata["subreddit"]].update(image_data=imageFuncs.convertToB64(newPFP))
+            newPFP = imf.convertToPFP(imf.saveAsPFP(fileName, window.metadata["subreddit"], subreddit=True), (200,200), cacheOutput=(window.metadata["subreddit"], "subreddit"))
+            window[EventName].update(image_data=imf.convertToB64(newPFP))
             sg.popup_quick_message("Updated subreddit icon!")
+        
+    elif (event == "subreddit_join_subreddit"):
+        userDB = externalFuncs.initUserDB()
+        userDB["userData"].joinSubreddit(value)
+        window[EventName].update("Joined", disabled=True, button_color= ("white","green"))
+    
+    elif (event == "subreddit_leave_subreddit"):
+        userDB = externalFuncs.initUserDB()
+        userDB["userData"].leaveSubreddit(value)
+        window[EventName].update("Left", disabled=True, button_color = ("white","red"))
 
     # Events where we call external windows
 

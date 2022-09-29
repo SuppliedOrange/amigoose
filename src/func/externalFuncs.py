@@ -1,11 +1,10 @@
 # All the functions that are used throughout the entire app.
 
 import os
-from venv import create
 from src.dbfunc import sqlfunc,dataTables
 import PySimpleGUI as sg
 
-def moveTab(window:sg.Window,tabgroup:sg.TabGroup,fromTab:str,toTab:str):
+def moveTab(window:sg.Window,tabgroup:str,fromTab:str,toTab:str):
     """
     Moves from one tab to another, deselecting the older tab.
     """
@@ -31,7 +30,10 @@ def getFonts() -> list[str]:
 
 def initUserDB(username:str=sqlfunc.existingUser()) -> dict:
     """
-    Create a new data table for the specified user (or current user)
+    Create a new data table for the specified user (or current user)\n
+    Check dbfunc/dataTables.py for details on what functions you can use\n
+    Example: initUserDB()["loggedInStatus"].isCurrentUser()
+
     """
     userDB = dataTables.dataTables(username).initializeUser()
     return userDB
@@ -83,7 +85,8 @@ def playHonk():
 
 def getTheme(user:str=sqlfunc.existingUser()) -> str:
     """
-    Get the current preferred theme for the specified user (otherwise current user) from database.
+    Get the current preferred theme for the specified user (otherwise current user) from database.\n
+    user - Username to get theme preference for - String
     """
     userDB = initUserDB(user)
     return userDB["settings"].getPreference("theme")
@@ -95,9 +98,10 @@ def getThemeBackground() -> tuple:
     """
     return (sg.theme_background_color(),sg.theme_background_color())
 
-def checkIfExists(username:str) -> bool:
+def isUser(username:str) -> bool:
     """
-    Responds with a boolean indicating whether the provided name is the name of a user.
+    Responds with a boolean indicating whether the provided name is the name of a user.\n
+    username - Username to check - String
     """
     sqlfunc.selectDB("accounts")
     usernames = sqlfunc.loadColumn("passwords","username")
@@ -105,7 +109,8 @@ def checkIfExists(username:str) -> bool:
 
 def isSubreddit(subreddit:str) -> bool:
     """
-    Responds with a boolean indicating whether the provided name is a name of a subreddit.
+    Responds with a boolean indicating whether the provided name is a name of a subreddit.\n
+    subreddit - Subreddit to check - String
     """
     sqlfunc.selectDB("postData")
     subreddits = sqlfunc.loadColumn("subreddits","name")
@@ -154,6 +159,9 @@ def sanitizeEvent(event:str, allowNumbers=False) -> str:
     This removes those numbers by selecting only the alphabets, - and _ characters.\n
     Event - Event to check - String
     """
+    # There was actually an easier fix to this. I could've just appended a unique code to the end of each event and split that out. This was an unnecessary compromise.
+    # However, at the time of writing this comment, it is too late to make the changes needed. I hope someday I'll be an actual, better programmer and write better code.
+
     import re
     if not event: return None
 
@@ -169,6 +177,9 @@ def getBasename(filePath:str) -> str:
     return os.path.basename(filePath)
 
 def postFunctionHandler(event,values,window):
+    """
+    A watcher that's always running. It allows for universal functions to be used with ease.\n
+    """
 
     event = sanitizeEvent(event, allowNumbers=True)
 
@@ -187,9 +198,10 @@ def postFunctionHandler(event,values,window):
     
     elif (method == "postHonk"):
         id = postIdentityExtractor(value)
-        userDB["postData"].toggleHonk(id["author"], id["uuid"], id["subreddit"])
+        honker = sqlfunc.existingUser()
+        userDB["postData"].toggleHonk(honker, id["uuid"], id["subreddit"])
         window["postHonks_" + value].update( str(userDB["postData"].getHonks(id["uuid"])) )
-        if (userDB["postData"].checkHonk(id["author"],id["uuid"])):
+        if (userDB["postData"].checkHonk(honker, id["uuid"])):
             playHonk()
         
     elif (method == "imagePostOpen"): 
@@ -216,12 +228,55 @@ def postFunctionHandler(event,values,window):
         from src.app.post.viewPost.viewPostVideo import viewPostVideo
         viewPostVideo.start(argsWindow=value)
     
+    elif (method == "viewPostDelete"):
+        conf = sg.popup_yes_no("Are you sure you want to delete this post? You can't undo!!")
+        id = postIdentityExtractor(value)
+        if (conf == "Yes"):
+            userDB["postData"].deletePost(id["uuid"])
+            sg.popup_quick("Your post has been discarded into the void.")
+
+
     elif (method == "commentPost"):
         id = postIdentityExtractor(value)
         from src.app.post.createComment.createComment import createComment
         createComment.start(argsWindow= (id["uuid"], id["author"]) )
 
-def postIdentityExtractor(id):
+    elif (method == "deleteComment"):
+        conf = sg.popup_yes_no("Are you sure you want to delete your comment?")
+        if (conf == "Yes"):
+            userDB()["postData"].deleteComment(value)
+            sg.popup_quick("Your comment has been discarded into the void.")
+    
+    elif (method == "commentOpenParentPost"):
+        uuid = value
+        postType = getPostFileData(getPostIdentity(uuid))["type"]
+
+        if postType == "text":
+            from src.app.post.viewPost.viewPostText import viewPostText
+        elif postType == "image":
+            from src.app.post.viewPost.viewPostImage import viewPostImage
+        elif postType == "video":
+            from src.app.post.viewPost.viewPostVideo import viewPostVideo
+
+def getPostIdentity(uuid, mode=str):
+    """
+    Get's the post identity (author-uuid-subreddit) in string or dictionary format\n
+    \n
+    uuid - String - The UUID of the post\n
+    mode - class - str or dict
+    """
+    userDB = initUserDB()
+    data = userDB["postData"].getPostsBy(uuid=uuid, fetchAll=False)
+    postIdentity = data[0] + "-" + data[2] + "-" + data[1]
+    if mode == str: return postIdentity
+    else: return postIdentityExtractor(postIdentity)
+
+def postIdentityExtractor(id:str) -> dict:
+    """
+    Simply splits a string in the format of "author-uuid-subreddit" and returns a dictionary with the split data.\n
+    
+    id - String - ID to extract data from.
+    """
     author, uuid, subreddit = id.split("-")
     return {
         "author": author,
@@ -229,11 +284,59 @@ def postIdentityExtractor(id):
         "subreddit": subreddit
     }
 
-def getPostFileData(subreddit, author, uuid):
-    dataFile = getPath(f'./subreddits/posts/{subreddit}/{author}+{uuid}.dat')
+def getPostFileData(postIdentity:str) -> dict:
+    """
+    Locates the .dat file for the post, decodes it, and returns the data.\n
+
+    postIdentity - String - Post's identity (use getPostIdentity)
+    """
+    post = postIdentityExtractor(postIdentity)
+    dataFile = getPath(f'./subreddits/posts/{post["subreddit"]}/{post["author"]}+{post["uuid"]}.dat')
     import pickle
     f = open(dataFile,"rb")
     return pickle.load(f)
+
+def prettyDate(time:int):
+    """
+    Get a pretty string like 'an hour ago', 'Yesterday', '3 months ago' etc from a UNIX/EPOCH integer,\n
+
+    Thanks to https://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python/\n
+    The alternative was to use the "arrow" or "humanize" packages but I didn't want to clutter my deps\n
+
+    time - Integer - UNIX/EPOCH integer of the time.
+    """
+    from datetime import datetime
+    now = datetime.now()
+    diff = now - datetime.fromtimestamp(time)
+    second_diff = diff.seconds
+    day_diff = diff.days
+
+    if day_diff < 0:
+        return '???'
+
+    if day_diff == 0:
+        if second_diff < 10:
+            return "just now"
+        if second_diff < 60:
+            return str(second_diff) + " s"
+        if second_diff < 120:
+            return "a minute ago"
+        if second_diff < 3600:
+            return str(second_diff // 60) + " min"
+        if second_diff < 7200:
+            return "an hour ago"
+        if second_diff < 86400:
+            return str(second_diff // 3600) + " h"
+    if day_diff == 1:
+        return "Yesterday"
+    if day_diff < 7:
+        return str(day_diff) + " d"
+    if day_diff < 31:
+        return str(day_diff // 7) + " w"
+    if day_diff < 365:
+        return str(day_diff // 30) + " mo"
+    return str(day_diff // 365) + " y"
+
 
 class WinElement():
     """

@@ -110,7 +110,7 @@ postmaps = Format(
     """
     author varchar(255) NOT NULL,
     subreddit varchar(255),
-    uuid varchar(255) NOT NULL,
+    uuid varchar(255) PRIMARY KEY,
     honks int DEFAULT 0,
     resourceLink varchar(255),
     dateCreated int unsigned
@@ -125,7 +125,7 @@ honkLogs = Format(
     """
     author varchar(255) NOT NULL,
     subreddit varchar(255),
-    uuid varchar(255) NOT NULL
+    uuid varchar(255) UNIQUE
     """,
 
     "(author, subreddit, uuid)"
@@ -136,12 +136,14 @@ comments = Format(
 
     """
     author varchar(255) NOT NULL,
-    uuid varchar(255) NOT NULL,
+    post_uuid varchar(255),
+    uuid varchar(255) UNIQUE,
     content varchar(255) DEFAULT "",
-    dateCreated int unsigned
+    dateCreated int unsigned,
+    FOREIGN KEY (post_uuid) REFERENCES postmaps(uuid)
     """,
 
-    "(author, uuid, content, dateCreated)"
+    "(author, post_uuid, uuid, content, dateCreated)"
 )
 
 

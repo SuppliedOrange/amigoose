@@ -15,7 +15,7 @@ cursor = db.cursor()
     
 def readAll():
     try:
-        return cursor.fetchall() # important to read all cursor data before attaching more data to cursor
+        return cursor.fetchall() # important to read all the cursor data before attaching more data to the cursor
     except:
         pass
 
@@ -28,7 +28,7 @@ def selectDB(db):
 
 def cleanConnection():
     """
-    Incase we need to force stop the database connection
+    To close the database connection
     """
     db.close()
 
@@ -97,8 +97,6 @@ def deleteData(table,*operators):
     db.commit()
     print(cursor.rowcount, "records affected")
 
-
-
 def executeSQL(query,commit=False):
     """
     Query - Your SQL query - String\n
@@ -136,7 +134,7 @@ def updateData(table,toUpdateColumn,toUpdateValue,identifier):
 def getData(table,identifier,columnToGet,fetchAll=False):
     """
     Table - A table in the selected database - String\n
-    Identifier - Identifier to locate correct row (Column, Value) - Tuple( String, String )\n
+    Identifier - Identifier to locate correct row(s) in the form of (Column, Value) - Tuple( String, String )\n
     columnToGet - The column to get entries from - String\n
     fetchAll - Whether to fetch all entries in the form of a list - Boolean\n
 
@@ -239,15 +237,3 @@ def checkMatch(table, *checkers):
         query = query + val[0] + " = '" + val[1] + ("' AND " if ind != len(checkers) - 1 else "'")
     cursor.execute(query)
     return bool(cursor.fetchone())
-        
-
-
-#selectDB('accounts')
-#insertData("tokens",("random human","sekrittoken"))
-#deleteData("tokens","username","random human")
-#deleteAccount("lternatively")
-#print(getData("tokens",(),"username",fetchAll=True))
-#updateData("tokens","token","hello world",("username","lternatively"))
-#print(loadColumn("tokens","username"))
-#print(getData("tokens",("username","lternatively"),"token"))
-#cleanConnection()

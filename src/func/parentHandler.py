@@ -2,8 +2,8 @@ def parentHandler(parent:dict):
     """
     parent -> {
         Type - Type of window to open - String
-        LayoutArgs - Arguments for the parent window layout - String | Tuple
-        WatchArgs - Arguments for watching the parent window - String | Tuple
+        layoutArgs - Arguments for the parent window layout - String | Tuple
+        watchArgs - Arguments for watching the parent window - String | Tuple
     }
     """
     def handleParameters(key):
@@ -36,3 +36,7 @@ def parentHandler(parent:dict):
     elif parentType == "viewPostImage":
         from src.app.post.viewPost.viewPostImage import viewPostImage
         viewPostImage.start(argsWindow=layoutArgs, argsWatch=watchArgs)
+    
+    elif parentType == "viewPostVideo":
+        from src.app.post.viewPost.viewPostVideo import viewPostVideo
+        viewPostVideo.start(argsWindow=layoutArgs, argsWatch=watchArgs)

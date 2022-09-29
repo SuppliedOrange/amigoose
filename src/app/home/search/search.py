@@ -103,7 +103,7 @@ def searchWatch(window):
         window["search_everywhere"].Click()
         
     # If user exists, change value to @user and update button
-    if (externalFuncs.checkIfExists(values["search_query"])):
+    if (externalFuncs.isUser(values["search_query"])):
         window["search_user_highlight"].update("@" + values["search_query"])
         window["search_open_profile"].update(visible=True)
     else:

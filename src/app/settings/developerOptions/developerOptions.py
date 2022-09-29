@@ -50,7 +50,7 @@ def developerOptionsWatch(window,mainWindow):
     
     elif (event == "developerOptions_delete_user"):
         user = sg.popup_get_text("Greetings, godfather. Whose grave shall I dig?")
-        if not externalFuncs.checkIfExists(user):
+        if not externalFuncs.isUser(user):
             sg.popup_quick_message("user " + (user or "*nothing*") + " doesnt exist")
         else:
             from src.dbfunc import sqlfunc as sf

@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from src.func import externalFuncs, imageFuncs
+from src.func import externalFuncs, imageFuncs, layoutParser
 
 def viewPostImageWindow(postIdentity, parent=None):
 
@@ -10,32 +10,50 @@ def viewPostImageWindow(postIdentity, parent=None):
     commentButton = externalFuncs.getButton("comment")
     userDB = externalFuncs.initUserDB()
     post = externalFuncs.postIdentityExtractor(postIdentity)
-    post = externalFuncs.getPostFileData(post["subreddit"], post["author"], post["uuid"])
+    post = externalFuncs.getPostFileData(postIdentity)
     width, height = [int(x/2) for x in sg.Window.get_screen_size()]
 
     authorpfp = imageFuncs.convertToB64(imageFuncs.convertToPFP(imageFuncs.getPFP(post["author"]) or externalFuncs.getPath("./assets/amigoose_assets/defaultGoose.png"), (50,50)))
 
     sg.theme(externalFuncs.getTheme())
 
-    viewPostTextLayout = [
+    headerLayout = [
         [sg.Button(image_filename=back_button, image_subsample=12, button_color= buttonColor, border_width=0, key="viewPostImageClose_" + postIdentity)],
         [sg.Text(post["title"], font=(defaultFont,30)), sg.Push(),
          sg.Button(image_data=authorpfp,button_color=buttonColor, border_width=0, key="viewPostImageOpenAuthor_" + post["author"])],
-        [sg.Button(image_data=imageFuncs.loadResizedImageB64(post["url"], 200), button_color= buttonColor, border_width=0, key="imagePostOpen_" + postIdentity)],
-        [sg.T()],
-        [sg.Button(image_filename=commentButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="commentPost_" + postIdentity),
-         sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="postHonk_" + postIdentity),
-         sg.Text(str(userDB["postData"].getHonks(post["uuid"])), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + postIdentity)],
-        [sg.Text()],
     ]
 
-    viewPostTextLayout = [
+    actionButtonLayout = [
+        sg.Button(image_filename=commentButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="commentPost_" + postIdentity),
+        sg.Button(image_filename=megaphoneButton, image_subsample=9, font=(defaultFont, 15), button_color= buttonColor, border_width=0, key="postHonk_" + postIdentity),
+        sg.Text(str(userDB["postData"].getHonks(post["uuid"])), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + postIdentity)
+        ]
+    
+    if (userDB["dataTables"].username == post["author"]):
+        from random import choice
+        delete_quotes = ["Deletus.", "Commit Unpost.", "Unalive post.", "Dileet Post"]
+        actionButtonLayout.extend([
+            sg.Push(), sg.Button(choice(delete_quotes), button_color="red", key="viewPostDelete_" + postIdentity)
+        ])
+
+    viewPostImageLayout = [
+        [sg.Button(image_data=imageFuncs.loadResizedImageB64(post["url"], 200), button_color= buttonColor, border_width=0, key="imagePostOpen_" + postIdentity)],
+        [sg.T()],
+        actionButtonLayout,
+        [sg.Text()],
+        [sg.HSep()],
+        *layoutParser.getComments(post["uuid"])
+    ]
+
+    viewPostImageLayout = [
         [sg.Column(
-            viewPostTextLayout, scrollable=True, sbar_relief=sg.RELIEF_FLAT, sbar_background_color=externalFuncs.getThemeBackground(), expand_x=True, expand_y=True
+            viewPostImageLayout, scrollable=True, sbar_relief=sg.RELIEF_FLAT, sbar_background_color=externalFuncs.getThemeBackground(), expand_x=True, expand_y=True
         )]
     ]
 
-    window = sg.Window( (post["title"][0:30] + (" ..." if len(post["title"]) > 30 else "")) , viewPostTextLayout.copy(), size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo(), metadata={
+    viewPostImageLayout = headerLayout + viewPostImageLayout
+
+    window = sg.Window( (post["title"][0:30] + (" ..." if len(post["title"]) > 30 else "")) , viewPostImageLayout.copy(), size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo(), metadata={
         "parent": parent,
         "postIdentity": postIdentity
     })

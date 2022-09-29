@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from src.func import externalFuncs, imageFuncs
+from src.func import externalFuncs, imageFuncs, layoutParser
 
 def commentsLayout(username):
     defaultFont = externalFuncs.getDefaultFont()
@@ -8,13 +8,20 @@ def commentsLayout(username):
     sg.theme(externalFuncs.getTheme())
     buttonColor = externalFuncs.getThemeBackground()
 
-    postsLayout = [
-        [sg.Button(image_filename=profile_button, image_subsample=3, button_color=buttonColor, border_width=0, key="profile+comments_open_profile-" + username), sg.Push(),
+    headerLayout = [
+        [sg.Button(image_filename=profile_button, image_subsample=1, button_color=buttonColor, border_width=0, key="profile+comments_open_profile-" + username), sg.Push(),
         sg.Button(image_filename=posts_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile+comments_open_posts-" + username)],
-        [sg.Text("load the comments here.",font=(defaultFont,15))]
     ]
     
-    return postsLayout
+    commentsLayout = [
+        [sg.Column(
+            [ *layoutParser.getComments(username=username, mode="profile") ], scrollable=True, sbar_relief=sg.RELIEF_FLAT, sbar_background_color=externalFuncs.getThemeBackground(), expand_x=True, expand_y=True
+        )]
+    ]
+
+    commentsLayout = headerLayout + commentsLayout
+
+    return commentsLayout
 
 def commentsExec(event,values,window):
     if (event == "profile+comments_open_profile"):

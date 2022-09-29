@@ -28,11 +28,22 @@ def createCommentWatch(window):
     event,values = window.read(100)
     event = externalFuncs.sanitizeEvent(event)
 
-    method,value = event.split("-") if event and "-" in event else (None,None)
+    userDB = externalFuncs.initUserDB()
 
     if(event==sg.WIN_CLOSED):
         window.close()
-        return (True,True) # break, no failure
+        return (True,True)
+    
+    if (event == "createComment_confirm"):
+        # We have the post's uuid so we find the post with that uuid and check the subreddit it was posted in
+        # subreddit_of_origin = userDB["postData"].getPostsBy( uuid=window.metadata["uuid"], column="subreddit", fetchAll=False )[0]
+        # New challenge, you have the subreddit, author and uuid of the post. How do you get the title?
+        # Use the three to find the link to the post's .dat file, open the .dat file to find the title! Wow, how inefficient! I love it.
+        # title = externalFuncs.getPostFileData(subreddit_of_origin, window.metadata["author"], window.metadata["uuid"])["title"]
+        userDB["postData"].makeCommentForPost( window.metadata["uuid"], values['createComment_textbox'], window.metadata["author"])
+        window.close()
+        sg.popup_quick("Comment posted!")
+        return (True, True)
     
     comment_length = len(values['createComment_textbox'])
     comment_invalid = comment_length > 1000 or comment_length < 1

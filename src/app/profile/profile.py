@@ -29,7 +29,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
         [sg.Image(pfp), sg.Push(), sg.Text(username, font=(defaultFont,40))],
         [sg.T('')],
         [sg.Text(f"Joined: {date_join}" , font=(defaultFont,12)), sg.Push(), sg.Text("Honks: " + str(userDB["userData"].getProfileData("honks")[0]), font=(defaultFont,12))],
-        [sg.Text(f"\"{bio}\"" if bio else "", font=(defaultFont,12), size=(50,30))]
+        [sg.Text(f"\"{bio}\"" if bio else "", font=(defaultFont,12), size=(50,30))],
     ]
 
     tabs = [
@@ -53,9 +53,19 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
 def profileWatch(window):
     
     event,values = window.read(100)
-    event = externalFuncs.sanitizeEvent(event)
 
-    method,value = event.split("-") if event and "-" in event else (None,None)
+    sanitizedEvent = externalFuncs.sanitizeEvent(event)
+
+    try:
+        method,value = sanitizedEvent.split("-") if sanitizedEvent and "-" in sanitizedEvent else (None,None)
+    except Exception as E:
+        method, value = None, None
+
+    try:
+        # "fake" is an easier method to do exactly what externalFuncs.sanitizeEvent does. Unfortunately I wasn't smart enough to have thought of that then. So now here we are.
+        umethod, uvalue, fake = (None, None, None) if not event or len(event.split("_")) != 3 else event.split("_")
+    except Exception as E:
+        umethod = None
 
     if value == window.metadata["username"]:
         event = event.split("-")[0]
@@ -75,6 +85,23 @@ def profileWatch(window):
 
     elif (event == "profile_open_comments"):
         externalFuncs.moveTab(window,"profileTabgroup","profileTab","commentsTab")
+
+    elif (umethod == "profileCommentOpenParentPost"):
+        uuid = uvalue
+        id = externalFuncs.getPostIdentity(uuid)
+        postType = externalFuncs.getPostFileData(id)["type"]
+        window.close()
+        parent = { "type": "profile", "layoutArgs": (window.metadata["username"], "commentsTab", window.metadata["parent"]) }
+        if postType == "text":
+            from src.app.post.viewPost.viewPostText import viewPostText
+            viewPostText.start(argsWindow=(id, parent))
+        elif postType == "image":
+            from src.app.post.viewPost.viewPostImage import viewPostImage
+            viewPostImage.start(argsWindow=(id, parent))
+        elif postType == "video":
+            from src.app.post.viewPost.viewPostVideo import viewPostVideo
+            viewPostVideo.start(argsWindow=(id, parent))
+        return (True,True)
 
     v = (event,values,window)
 

@@ -1,4 +1,5 @@
 from src.dbfunc import sqlfunc as sf
+from src.func import externalFuncs as ef
 import os
 
 class dataTables():
@@ -179,38 +180,53 @@ class postData(dataTables):
         sf.selectDB("postData")
         sf.insertData("postmaps", (author, subreddit, uuid, resourceLink, dateCreated))
 
-    def getPostsBy(self, subreddit=None, author=None, uuid=None, fetchAll=True, column="*"):
+    def getPostsBy(self, subreddit=None, author=None, uuid=None, fetchAll=True, orderby="dateCreated", column="*"):
         sf.selectDB("postData")
         queries = ""
-        if (subreddit):
-            queries += f' WHERE subreddit = "{subreddit}" '
-        if (author):
-            if (queries): queries += "AND"
-            queries += f' WHERE author = "{author}" '
-        if (uuid):
-            if (queries): queries += "AND"
-            queries += f' WHERE uuid = "{uuid}" '
 
         if not subreddit and not author and not uuid:
             return None
 
-        result = sf.executeSQL("SELECT " + column + " FROM POSTMAPS" + queries + "ORDER BY dateCreated DESC")
+        else: queries += " WHERE"
+
+        if (subreddit):
+            queries += f' subreddit = "{subreddit}" '
+        if (author):
+            if (queries != " WHERE"): queries += "AND"
+            queries += f' author = "{author}" '
+        if (uuid):
+            if (queries != " WHERE"): queries += "AND"
+            queries += f' uuid = "{uuid}" '
+        result = sf.executeSQL("SELECT " + column + " FROM POSTMAPS" + queries + "ORDER BY " + orderby + " DESC")
         return result.fetchall() if fetchAll else result.fetchone()
 
-    '''
-    def getPost(self, uuid, column="*"):
+    def getPostsBySubredditList(self, column="*", subreddits=[], limit=50):
+        # Initially when I started this project, I had an idea to optimize the posts and have unlimited posts in a single page. However, it is currently september 27 and I don't want to put this off any longer.
+        # It's a good idea, but it's not the best project to implement it on. This project has it's flaws and someday I'll make a better social media with better optimization.
+        # But for now, why don't we give our CPU a hard time and call this project cool because it's intricately designed?
+        if not subreddits: return []
         sf.selectDB("postData")
-        post = sf.getData("postmaps", ("uuid",uuid), column)
-        return post
-        #Removed this, check if it causes problems.
-    '''
+        sublist = "('" + "','".join(subreddits) + "')"
+        query = f"select {column} from postmaps where subreddit in " + sublist + " order by dateCreated desc"
+        result = sf.executeSQL(query)
+        try: return result.fetchall()
+        except: return []
 
-    def deletePost(self, author, uuid, subreddit, resourceLink):
+    def deletePost(self, uuid):
         sf.selectDB("postData")
-        author = author.lower()
-        sf.deleteData("postdata", (("uuid",uuid), ("author",author)) )
+        post = ef.getPostFileData( ef.getPostIdentity(uuid) )
+        author, subreddit = post["author"].lower(), post["subreddit"]
+        # Remove the resource link for it, if it exists.
+        rl = sf.getData("postmaps", ("uuid", uuid), "resourceLink")[0]
+        if (rl and os.path.isfile(rl)): os.remove(rl)
+        # Remove all comments related to the post, this first because it's connected to postmaps as a foriegn key.
+        sf.deleteData("comments", ("post_uuid", uuid))
+        # Remove the postmap for it.
+        sf.deleteData("postmaps", ("uuid",uuid), ("author",author) )
+        # Remove the .dat file for the post.
         os.remove(os.path.abspath(f'./subreddits/posts/{subreddit}/{author}+{uuid}.dat'))
-        if (os.path.isfile(resourceLink)): os.remove(resourceLink)
+        # Remove all honks related to the post.
+        sf.deleteData("honklogs", ("uuid", uuid))
 
     def checkHonk(self, author, uuid):
         sf.selectDB("postData")
@@ -218,27 +234,55 @@ class postData(dataTables):
     
     def getHonks(self, uuid):
         sf.selectDB("postData")
-        honks = sf.getData("honkLogs", ("uuid", uuid), "author", fetchAll=True)
-        return len(honks)
+        honks = sf.getData("honkLogs", ("uuid", uuid), "count(*)")
+        return honks[0]
 
-    def toggleHonk(self, author, uuid, subreddit):
+    def toggleHonk(self, honker, uuid, subreddit):
+        # Note that "author" here is the person who initiated the honk. The UUID and Subreddit is the post's data.
         sf.selectDB("postData")
-        isHonked = sf.checkMatch("honkLogs", ("author", author), ("uuid",uuid))
+        isHonked = sf.checkMatch("honkLogs", ("author", honker), ("uuid",uuid))
+        honks = self.getHonks(uuid)
+
         if not isHonked:
-            sf.insertData("honkLogs", (author,subreddit,uuid))
+            sf.insertData("honkLogs", (honker,subreddit,uuid))
+            sf.updateData("postmaps", "honks", honks + 1, ("uuid", uuid))
             return True # Inserted honk
         else:
-            sf.deleteData("honkLogs", ("author", author), ("uuid", uuid))
+            # Add a log to honklogs, update respective post's map with the number of honks.
+            sf.deleteData("honkLogs", ("author", honker), ("uuid", uuid))
+            sf.updateData("postmaps", "honks", honks - 1, ("uuid", uuid))
             return False # Removed honk
         
     # Comment stuff
 
-    def getCommentsForPost(self, uuid):
+    def getCommentsBy(self, post_uuid=None, username=None, orderby="dateCreated desc"):
         sf.selectDB("postData")
-        comments = sf.executeSQL(f"select * from comments where uuid = '{uuid}' order by dateCreated desc")
+        query = "select * from comments where"
+
+        if post_uuid:
+            query += f" post_uuid = '{post_uuid}'"
+        if username:
+            query += f" author = '{username}'"
+
+        query += f" order by {orderby}"
+
+        comments = sf.executeSQL(query)
+
         commentPool = []
-        commentTitles = ["author", "uuid", "content", "dateCreated"]
+        commentTitles = ["author","post_uuid", "uuid", "content", "dateCreated"]
         for comment in comments:
             comment = dict(zip(commentTitles, comment))
             commentPool.append(comment)
         return commentPool
+    
+    def makeCommentForPost(self, post_uuid, content, author):
+        import uuid
+        COMMENT_UUID = uuid.uuid4().hex
+        from time import time
+        CURRENT_TIME = int(time())
+        sf.selectDB("postData")
+        sf.insertData("comments", (author, post_uuid, COMMENT_UUID, content, CURRENT_TIME))
+
+    def deleteComment(self, uuid):
+        sf.selectDB("postData")
+        sf.deleteData("comments", ("uuid", uuid))
