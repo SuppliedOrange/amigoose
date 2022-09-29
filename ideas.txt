@@ -1,18 +1,4 @@
-handle sql injections
-
-add a button to create a subreddit in profile settings.
-show all subreddits in profile settings with an option to leave them.
-
-create a profile page. consists of:
-amigoose (friends), total honks, whether you are amigoose with this person.
-there are three buttons top left, for profile, posts and comments respectively.
-
-subreddits folder is divided into posts which contains folders of subreddit names and in those folders, pickles of posts.
-subreddits pfp folder houses pfps for subreddits with their name
-
 a lot of data is manually changed during encryption and username change.
 a lot of data is carefully removed during user deletion
-
-for posts, keep the honk data in the sql postdata db binded to the post ID
-post ID: honks, subreddit
-This way, we can find the top posts quite easily
+a lot of data is removed in a lot of places that i can't remember.
+this is so inefficient.

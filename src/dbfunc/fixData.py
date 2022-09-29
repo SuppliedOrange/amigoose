@@ -1,3 +1,5 @@
+# Automatically creates all necessary SQL databases and certain data required for the app.
+
 from .formats import formats
 from . import sqlfunc
 from os import name as osname
