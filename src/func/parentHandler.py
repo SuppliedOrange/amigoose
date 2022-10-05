@@ -40,3 +40,7 @@ def parentHandler(parent:dict):
     elif parentType == "viewPostVideo":
         from src.app.post.viewPost.viewPostVideo import viewPostVideo
         viewPostVideo.start(argsWindow=layoutArgs, argsWatch=watchArgs)
+    
+    elif parentType == "explore":
+        from src.app.home.explore.explore import explore
+        explore.start(argsWindow=layoutArgs)

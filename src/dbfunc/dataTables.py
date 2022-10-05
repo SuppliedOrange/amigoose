@@ -1,5 +1,4 @@
 from src.dbfunc import sqlfunc as sf
-from src.func import externalFuncs as ef
 import os
 
 
@@ -20,7 +19,7 @@ class settings(dataTables):
 
     def getDataTableName(self):
         return "settings"
-
+    
     # Preference table in Settings database
     def getPreference(self, column, fetchAll=False):
         sf.selectDB("settings")
@@ -119,6 +118,121 @@ class userData(dataTables):
                       ("username", self.username))
 
         return (True,)
+    
+    def changeUsername(self, new_username):
+
+        username = self.username
+        super().__init__(username)
+        userDB = self.initializeUser()
+
+        import os
+        import pickle
+
+        sf.selectDB("accounts")
+        # Update passwords
+        sf.updateData("passwords","username",new_username,("username", username))
+        # Update tokens
+        sf.updateData("tokens","username",new_username, ("username", username))
+        # Update preferences
+        userDB["settings"].updatePreference("username", new_username)
+        # Update login state
+        userDB["settings"].updateGlobal("loginState","username",new_username)
+        # Update profile data
+        self.updateProfileData("username",new_username)
+        # Update subreddit data
+        self.updateSubredditData("username", new_username)
+        
+        sf.selectDB("postdata")
+        # Update subreddits
+        sf.updateData("subreddits", "owner", new_username, ("owner", username))
+
+        # Update all .dat files by the user and rename them. The name of resource link does not matter as they're never accessed directly.
+        try:
+            post_uuids = sf.getData("postmaps", ("author", username), "uuid", fetchAll=True)
+
+            # Method copied and concated from func/externalFuncs.py
+            def getPostIdentityAndThenGetPostFileData(uuid):
+                data = userDB["postData"].getPostsBy(uuid=uuid, fetchAll=False)
+                dataFile = os.path.abspath(f'./subreddits/posts/{data[1].lower()}/{data[0].lower()}+{data[2]}.dat')
+                import pickle
+                f = open(dataFile,"rb")
+                return pickle.load(f)
+            
+            for uuid in post_uuids:
+                post = getPostIdentityAndThenGetPostFileData(uuid)
+                subreddit, author, uuid = post["subreddit"].lower(), post["author"].lower(), post["uuid"].lower()
+
+                # Rename the .dat file
+                postpath = os.path.abspath(f"./subreddits/posts/{subreddit}/{author}+{uuid}.dat")
+                newpostpath = os.path.abspath(f"./subreddits/posts/{subreddit}/{new_username.lower()}+{uuid}.dat")
+                os.rename(postpath, newpostpath)
+
+                # Change the author and update the file
+                post["author"] = new_username
+                with open(newpostpath, 'wb') as f:
+                    pickle.dump(post, f)
+                
+        except Exception as e: print(e)
+
+        sf.selectDB("postdata")
+        # Update postmaps
+        sf.updateData("postmaps", "author", new_username, ("author", username))
+        # Update honkLogs
+        sf.updateData("honkLogs", "author", new_username, ("author", username))
+        # Update comments
+        sf.updateData("comments", "author", new_username, ("author", username))
+
+        # Note that profile picture is not changed here. You'll need to do it manually (check profileManager)
+
+    def deleteAccount(self):
+        username = self.username
+
+        super().__init__(username)        
+        userDB = self.initializeUser()
+
+        import os
+
+        sf.selectDB("accounts")
+        # Drop the token related to the username
+        sf.deleteData("tokens", ("username", username))
+        # Drop the password related to the username
+        sf.deleteData("passwords", ("username", username))
+
+        sf.selectDB("settings")
+        # Drop all preferences related to the user
+        sf.deleteData("preferences", ("username", username))
+
+        sf.selectDB("userData")
+        # Drop all profile data related to the user
+        sf.deleteData("profileData", ("username", username))
+        # Remove their subreddits
+        sf.deleteData("subredditData", ("username", username))
+
+        sf.selectDB("postData")
+        # Remove all their comments
+        sf.deleteData("comments", ("author", username))
+        # Remove all their honks
+        sf.deleteData("honklogs", ("author", username))
+        # Remove all their posts
+        try:
+            post_uuids = sf.getData("postmaps", ("author", username), "uuid", fetchAll=True)
+            post_uuids = post_uuids.fetchall()
+            post_uuids = [x[0] for x in post_uuids]
+            [userDB["postData"].deletePost(uuid) for uuid in post_uuids]
+        except: pass
+        # Surrender all their subreddits to the user named "admin"
+        sf.updateData("subreddits", "owner", "admin", ("owner", username))
+        
+        # Log the user out if the current user is the user being deleted
+        if sf.existingUser() == username:
+            sf.deleteData("loginState", ("username", username))
+        # Remove the user's pfp if it exists.
+        if (os.path.exists(os.path.abspath("./assets/user_assets/pfps/" + username + ".png"))):
+            os.remove(os.path.abspath(
+                "./assets/user_assets/pfps/" + username + ".png"
+                ))
+        
+        return (True, "Success")
 
 
 class postData(dataTables):
@@ -186,6 +300,8 @@ class postData(dataTables):
                 "./subreddits/pfps/" + name.lower() + "/"))
         except:
             pass
+            
+        
 
     # POST MAP STUFF
 
@@ -236,7 +352,16 @@ class postData(dataTables):
 
     def deletePost(self, uuid):
         sf.selectDB("postData")
-        post = ef.getPostFileData(ef.getPostIdentity(uuid))
+
+        # Method copied and concated from func/externalFuncs.py
+        def getPostIdentityAndThenGetPostFileData(uuid):
+            data = self.getPostsBy(uuid=uuid, fetchAll=False)
+            dataFile = os.path.abspath(f'./subreddits/posts/{data[1].lower()}/{data[0].lower()}+{data[2]}.dat')
+            import pickle
+            f = open(dataFile,"rb")
+            return pickle.load(f)
+
+        post = getPostIdentityAndThenGetPostFileData(uuid)
         author, subreddit = post["author"].lower(), post["subreddit"]
         # Remove the resource link for it, if it exists.
         rl = sf.getData("postmaps", ("uuid", uuid), "resourceLink")[0]

@@ -3,15 +3,15 @@ from src.func import externalFuncs, imageFuncs
 from src.func import layoutParser as lp
 
 def postsLayout(username):
-    defaultFont = externalFuncs.getDefaultFont()
     comment_button = externalFuncs.getButton("comment")
-    profile_button = imageFuncs.convertToPFP( imageFuncs.getPFP(username) ,(200,200), cacheOutput=(username, "user"))
+    profile_button = imageFuncs.convertToPFP( imageFuncs.getPFP(username), (50, 50), cacheOutput=(username, "user"))
+    # removed image_subsampling (normally should be (200,200) width and height and a 3 subsampling)
     sg.theme(externalFuncs.getTheme())
     buttonColor = externalFuncs.getThemeBackground()
     userDB = externalFuncs.initUserDB()
 
     postsLayout = [
-        [sg.Button(image_filename=profile_button, image_subsample=1, button_color=buttonColor, border_width=0, key="profile+posts_open_profile-" + username), sg.Push(),
+        [sg.Button(image_filename=profile_button, button_color=buttonColor, border_width=0, key="profile+posts_open_profile-" + username), sg.Push(),
         sg.Button(image_filename=comment_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile+posts_open_comments-" + username)],
         [sg.HSep()],
         [sg.Column(

@@ -15,7 +15,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
     comment_button = externalFuncs.getButton("comment")
     posts_button = externalFuncs.getButton("post")
     userDB = externalFuncs.initUserDB(username)
-    pfp = imageFuncs.convertToPFP(imageFuncs.getPFP(username) or externalFuncs.getPath("./assets/amigoose_assets/defaultGoose.png"), (200,200))
+    pfp = imageFuncs.convertToB64( imageFuncs.convertToPFP( imageFuncs.getPFP(username), (200,200), allowCacheUsage=False ) )
     date_join = datetime.utcfromtimestamp( userDB["userData"].getProfileData("accountCreated")[0] ).strftime("%d/%m/%Y")
     bio = userDB["userData"].getProfileData("bio")[0]
     buttonColor = externalFuncs.getThemeBackground()
@@ -26,7 +26,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
         [sg.Button(image_filename=back_button, image_subsample=12, button_color= buttonColor, border_width=0, key="profile_return_home-" + username ), sg.Push(),
          sg.Button(image_filename=posts_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile_open_posts-" + username),
          sg.Button(image_filename=comment_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile_open_comments-" + username)],
-        [sg.Image(pfp), sg.Push(), sg.Text(username, font=(defaultFont,40))],
+        [sg.Image(data=pfp), sg.Push(), sg.Text(username, font=(defaultFont,40))],
         [sg.T('')],
         [sg.Text(f"Joined: {date_join}" , font=(defaultFont,12)), sg.Push(), sg.Text("Honks: " + str(userDB["userData"].getProfileData("honks")[0]), font=(defaultFont,12))],
         [sg.Text(f"\"{bio}\"" if bio else "", font=(defaultFont,12), size=(50,30))],
@@ -39,7 +39,7 @@ def profileWindow(username=sqlfunc.existingUser(), openTab=None ,parent=None):
     ]
 
     profileLayout = [[sg.TabGroup([tabs], key='profileTabgroup', expand_x=True, expand_y=True)]]
-    window = sg.Window("@" + username ,profileLayout.copy(),size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.convertToB64(pfp), metadata={
+    window = sg.Window("@" + username ,profileLayout.copy(),size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=pfp, metadata={
         "tabs": list(map(lambda x: x.Key ,tabs)),
         "username": username,
         "parent": parent
@@ -102,6 +102,9 @@ def profileWatch(window):
             from src.app.post.viewPost.viewPostVideo import viewPostVideo
             viewPostVideo.start(argsWindow=(id, parent))
         return (True,True)
+    
+    # Dealing with post stuff
+    externalFuncs.postFunctionHandler(event, values, window)
 
     v = (event,values,window)
 

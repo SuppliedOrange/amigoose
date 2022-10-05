@@ -1,4 +1,4 @@
-from src.dbfunc import sqlfunc
+from src.dbfunc import sqlfunc, jsonfunc
 from src.func import externalFuncs, imageFuncs
 import PySimpleGUI as sg
 import pickle
@@ -52,6 +52,42 @@ def getSubredditsForUser(username):
     layout = [sg.Column(subColumn, scrollable=scrollable, vertical_scroll_only=True, size=(width,height), sbar_relief=sg.RELIEF_FLAT)]
     return layout
 
+def getSubredditsByTag(tag):
+    defaultFont = externalFuncs.getDefaultFont()
+    width, height = [int(x/4) for x in sg.Window.get_screen_size()]
+
+    def createColumn(layout,scrollbars=True):
+        return sg.Column(layout, scrollable=scrollbars, vertical_scroll_only=True, size=(width,height))
+    
+    subreddits = jsonfunc.loadData()[tag]
+
+    if len(subreddits) > 40:
+            del subreddits[40:]
+    
+    subColumn = createColumn([[sg.Text("No Gaggles with that tag", font=(defaultFont,12), auto_size_text=True)]], scrollbars=False)
+
+    if not subreddits:
+        return subColumn
+
+    userDB = externalFuncs.initUserDB()
+
+    def BT(subreddit): # BT = Button Type
+        inSubreddit = subreddit in userDB["userData"].getSubredditData("subreddit")
+
+        return {
+            "actionProtocol": "search_leave_subreddit-" if inSubreddit else "search_join_subreddit-",
+            "actionColor": ("white","red") if inSubreddit else ("white", "green"),
+            "subredditColor":("white", sg.theme_background_color()) if externalFuncs.isThemeDark() else ("black", sg.theme_background_color()),
+            "actionText": "Leave" if inSubreddit else "Join"
+        }
+
+    subColumn = [
+        [sg.T("\n"), sg.Button("g/" + subreddit, font=(defaultFont,15), button_color=BT(subreddit)["subredditColor"], border_width=0, key="explore_open_subreddit-" + subreddit), sg.Push(), sg.Button( BT(subreddit)["actionText"], button_color= BT(subreddit)["actionColor"], key=BT(subreddit)["actionProtocol"] + subreddit )] for subreddit in subreddits
+    ]
+
+    return createColumn(subColumn)
+
+
 def getClosestMatchSubreddit(searchFor):
     defaultFont = externalFuncs.getDefaultFont()
     width, height = [int(x/4) for x in sg.Window.get_screen_size()]
@@ -65,11 +101,10 @@ def getClosestMatchSubreddit(searchFor):
         return subColumn
 
     userDB = externalFuncs.initUserDB()
-    from src.dbfunc.jsonfunc import loadData
 
     sqlfunc.selectDB("postData")
     subResults = sqlfunc.searchData("subreddits","name",searchFor,fetchAll=True)
-    tags = loadData()
+    tags = jsonfunc.loadData()
     
     if searchFor in tags:
         if len(subResults) > 20:
@@ -100,11 +135,6 @@ def getClosestMatchSubreddit(searchFor):
         ]
         
     return createColumn(subColumn)
-
-# So we need a button that "opens" all text, image and video posts.
-# For text, just open the full text in a new window
-# For video, open the video image button and a honk button underneath with comments chained underneath
-# For image, same thing with comments chained underneath
 
 def textPostCard(*params):
 
@@ -205,6 +235,11 @@ def videoPostCard(*params):
 
 def postCardHandler(*uuids):
     cards = []
+    defaultFont = externalFuncs.getDefaultFont()
+    # Make a default message incase there are no posts. Ask them to join a gaggle.
+    noPostsAlert = [
+            [sg.Text("Join a Gaggle to see posts!\nUse the explore feature to get started", font=(defaultFont, 20), text_color="red")]
+        ]
     for uuid in uuids:
         id = externalFuncs.getPostIdentity(uuid)
         postType = externalFuncs.getPostFileData(id)["type"]
@@ -216,7 +251,7 @@ def postCardHandler(*uuids):
         elif postType == "video":
             cards.extend(videoPostCard(uuid))
 
-    return cards
+    return cards or noPostsAlert
 
 def getComments(uuid=None, username=None, mode="post"):  
     # mode = post | profile
@@ -230,7 +265,7 @@ def getComments(uuid=None, username=None, mode="post"):
     for comment in comments:
         authorpfp = imageFuncs.convertToB64(imageFuncs.convertToPFP(imageFuncs.getPFP(comment["author"]), (50,50)))
         defaultFont = externalFuncs.getDefaultFont()
-        isAuthorOfComment = userDB["dataTables"].username == comment["author"]
+        isAuthorOfComment = userDB["dataTables"].username.lower() == comment["author"].lower()
 
         layout = [
             [sg.Image(data=authorpfp), sg.Button("@" + comment["author"], font=(defaultFont,10), button_color= buttonColor, border_width=0, key="postOpenUser_" + comment["author"]), sg.Push(), sg.Text( externalFuncs.prettyDate(comment["dateCreated"]) )],
@@ -251,3 +286,24 @@ def getComments(uuid=None, username=None, mode="post"):
 
         cards.extend(layout)
     return cards
+
+def getRandomTags( tags=None ):
+    import random
+    buttonColor = ("white" if sg.theme_background_color() == "#19232D" else "black", sg.theme_background_color())
+    defaultFont = externalFuncs.getDefaultFont()
+    tags = tags or list( jsonfunc.loadData().keys() )
+    try:
+        tags = random.sample(tags, 6)
+    except ValueError:
+        return [
+            [sg.Text("There aren't enough gaggles with diverse tags!\nThis feature needs at least 6 tags", font=(defaultFont, 20), text_color="red")]
+        ]
+    
+    tagsLayout = [ [sg.Button(tag, font=(defaultFont, 14), button_color=buttonColor, border_width=0, key="explore_openTag-" + tag)] for tag in tags]
+    for i in range(1, len(tagsLayout), 2):
+        tagsLayout[i] = [sg.Push()] + tagsLayout[i]
+    
+    return [tagsLayout, tags]
+
+# TODO
+# 1) Make postCardHandler return a message if there are no subreddits joined to load posts from. - Ill do this last

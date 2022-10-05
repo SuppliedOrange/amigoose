@@ -112,17 +112,12 @@ def changeUsernameWindow():
             conf = sg.popup_yes_no("Are you sure you want to change your username to " + nu + "?\nThe app will close after this.")
             if conf != "Yes": break
 
-            from src.dbfunc import sqlfunc as sf
-            from src.func import imageFuncs as imf
-            currUser = sf.existingUser()
-            sf.selectDB("accounts")
-            sf.updateData("passwords","username",nu,("username", currUser))
-            sf.updateData("tokens","username",nu, ("username", currUser))
-            userDB["settings"].updatePreference("username", nu)
-            userDB["settings"].updateGlobal("loginState","username",nu)
-            userDB["userData"].updateProfileData("username",nu)
+            # Changing the username
+            userDB["userData"].changeUsername(nu)
 
-            userPFP = imf.getPFP(currUser)
+            # Updating the profile picture's name
+            from src.func import imageFuncs as imf
+            userPFP = imf.getPFP(userDB["dataTables"].username)
             if userPFP:
                 import os
                 newUserPFP = externalFuncs.getPath("./assets/user_assets/pfps/" + nu.lower() + ".png")

@@ -6,7 +6,7 @@ from . import externalFuncs
 import os
 
 
-def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = ()):
+def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = (), allowCacheUsage=True):
     """
     Converts any image to a circular PNG (PFP-styled in my words)\n\n
 
@@ -21,7 +21,7 @@ def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = ()):
     illegalNames = ["defaultGoose.png", "goose.png",
                     "joystick.png", "pizza.png", "travel.png"]
 
-    if not cacheOutput and not basename in illegalNames:
+    if (not cacheOutput) and (not basename in illegalNames) and (allowCacheUsage):
 
         subredditCache = externalFuncs.getPath(
             "./assets/remote_assets/cache/subreddit_pfps/subreddit@" + basename)
@@ -30,15 +30,15 @@ def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = ()):
 
         try:
             hasSubredditCache = (checkImage(subredditCache) and (
-                getSize(subredditCache) == resize))
+                getImageDimensions(subredditCache) == resize))
         except FileNotFoundError:
             hasSubredditCache = None
         try:
             hasUserCache = (checkImage(userCache) and (
-                getSize(userCache) == resize))
+                getImageDimensions(userCache) == resize))
         except FileNotFoundError:
             hasUserCache = None
-
+        
         if (hasSubredditCache):
             return subredditCache
         elif (hasUserCache):
@@ -64,6 +64,19 @@ def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = ()):
 
     return fp
 
+def cropImageIntoSquare(imagePath):
+    image = Image.open(imagePath)
+    width, height = image.size
+    if width == height:
+        return image
+    offset  = int(abs(height-width)/2)
+    if width>height:
+        image = image.crop([offset,0,width-offset,height])
+    else:
+        image = image.crop([0,offset,width,height-offset])
+    fp = externalFuncs.getPath("./assets/remote_assets/remotePFP.png")
+    image.save(Path(fp))
+    return fp
 
 def resizeImage(imagePath, resize: tuple, save=False):
     """
@@ -82,18 +95,26 @@ def resizeImage(imagePath, resize: tuple, save=False):
     im.save(Path(fp))
     return fp
 
+# Currently im facing a problem where the pfp doesnt get properly resized in profile's post and comment tabs. Need to fix.
 
 def getImageDimensions(imagePath):
+    """
+    Gets the width/height of an image.\n\n
+    imagePath - String - Path to the image\n
+    """
     if not checkImage(imagePath):
         return None
-    im = Image.open(imagePath)
+    try:
+        im = Image.open(imagePath).convert('RGB')
+    except:
+        return (0, 0)
     width, height = im.size
     return (width, height)
 
 
 def getPFP(username):
     """
-    Returns the image path of the avatar of a specified user or the defaultGoose PFP path\n
+    Returns the image path of the avatar of the specified user or the defaultGoose PFP path\n
     username - String - Username of the person's avatar to return
     """
     path = externalFuncs.getPath(
@@ -103,7 +124,7 @@ def getPFP(username):
 
 def getIcon(subreddit):
     """
-    Returns the image path of the icon of a specified subreddit\n
+    Returns the image path of the icon of the specified subreddit\n
     subreddit - String - Name of the subreddit's avatar to return
     """
     path = externalFuncs.getPath(
@@ -183,6 +204,7 @@ def saveAsPFP(imagePath, name, subreddit=False):
     name - String - Name of the subreddit/user\n
     subreddit - Boolean - Whether we are dealing with a subreddit or not (defaults to user)
     """
+    imagePath = cropImageIntoSquare(imagePath)
     destDir = externalFuncs.getPath(
         "./" + ("subreddits" if subreddit else "assets/user_assets") + "/pfps/")
     return copyFile(imagePath, destDir, name.lower() + ".png")
@@ -265,21 +287,6 @@ def identicalImages(path1, path2):
         'RGB'), Image.open(path2).convert('RGB')
     return (list(im1.getdata()) == list(im2.getdata()))
 
-
-def getSize(imagePath):
-    """
-    Gets the width/height of a certain image\n\n
-    imagePath - String - Path to the image
-    """
-    from PIL import Image
-    try:
-        im = Image.open(imagePath).convert('RGB')
-    except:
-        return (0, 0)
-    width, height = im.size
-    return (width, height)
-
-
 def getFirstFrameOfVideo(videoPath):
     """
     Gets the first frame (image) of a video and saves it to a remote image and returns the image path.\n\n
@@ -291,24 +298,3 @@ def getFirstFrameOfVideo(videoPath):
     remotePath = externalFuncs.getPath("./assets/remote_assets/remotePFP.png")
     imwrite(remotePath, image)
     return remotePath
-
-
-'''
-def honkImage(imageButtonElement, honkButtonElement):
-    import time
-
-    imagePath = honkButtonElement.metadata["url"]
-    originalImage = Image.open(imagePath)
-    w,h = getImageDimensions(imagePath)
-    w,h = int(w/2), int(h/2)
-    toResize = (w,w) if w<h else (h,h)
-    honkImage = resizeImage(externalFuncs.getPath("./assets/amigoose_assets/HONK.png"), toResize)
-
-    back_image = originalImage.copy()
-    back_image.paste(honkImage, (0,h))
-    remote_image_path = externalFuncs.getPath("./assets/remote_assets/remotePFP.png")
-    back_image.save(remote_image_path)
-    
-    imageButtonElement.update(image_data=convertToB64(remote_image_path))
-    imageButtonElement.update(image_data=convertToB64(imagePath))
-'''

@@ -1,7 +1,7 @@
 # All the functions that are used throughout the entire app.
 
 import os
-from src.dbfunc import sqlfunc,dataTables
+from src.dbfunc import sqlfunc, dataTables
 import PySimpleGUI as sg
 
 def moveTab(window:sg.Window,tabgroup:str,fromTab:str,toTab:str):
@@ -167,7 +167,24 @@ def sanitizeEvent(event:str, allowNumbers=False) -> str:
 
     if (allowNumbers):
         if re.search("([a-zA-Z0-9_\+-]+)", event): return re.search("([a-zA-Z0-9_\+-]+)", event).group(1)
-    if re.search("([a-zA-Z_\+-]+)", event): return re.search("([a-zA-Z_\+-]+)", event).group(1)
+
+    # So instead of this hard-core search, what if we just checked if the last 2 characters were numbers and removed them if they were?
+    #if re.search("([a-zA-Z_\+-]+)", event): return re.search("([a-zA-Z_\+-]+)", event).group(1)
+
+    # Using the above mentioned hack,
+    lastChar = event[-1]
+    try:
+        int(lastChar)
+        event = event[:-1]
+    except: lastChar = None
+
+    if lastChar:
+        try:
+            int(event[-1])
+            event = event[-1]
+        except: pass
+    
+    return "".join(event)
 
 def getBasename(filePath:str) -> str:
     """
@@ -244,7 +261,7 @@ def postFunctionHandler(event,values,window):
     elif (method == "deleteComment"):
         conf = sg.popup_yes_no("Are you sure you want to delete your comment?")
         if (conf == "Yes"):
-            userDB()["postData"].deleteComment(value)
+            userDB["postData"].deleteComment(value)
             sg.popup_quick("Your comment has been discarded into the void.")
     
     elif (method == "commentOpenParentPost"):

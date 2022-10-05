@@ -40,7 +40,7 @@ def createCommentWatch(window):
         # New challenge, you have the subreddit, author and uuid of the post. How do you get the title?
         # Use the three to find the link to the post's .dat file, open the .dat file to find the title! Wow, how inefficient! I love it.
         # title = externalFuncs.getPostFileData(subreddit_of_origin, window.metadata["author"], window.metadata["uuid"])["title"]
-        userDB["postData"].makeCommentForPost( window.metadata["uuid"], values['createComment_textbox'], window.metadata["author"])
+        userDB["postData"].makeCommentForPost( window.metadata["uuid"], values['createComment_textbox'], userDB["dataTables"].username)
         window.close()
         sg.popup_quick("Comment posted!")
         return (True, True)

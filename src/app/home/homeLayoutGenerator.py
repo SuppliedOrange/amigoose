@@ -2,13 +2,13 @@ import PySimpleGUI as sg
 from src.func import externalFuncs
 from src.func import layoutParser as lp
 
-
 def homeLayout():
     settings_icon = externalFuncs.getButton("settings_icon")
     defaultFont = externalFuncs.getDefaultFont()
     amigoose_logo = externalFuncs.getButton("amigoose_logo")
     sg.theme(externalFuncs.getTheme())
     userDB = externalFuncs.initUserDB()
+
     width, height = sg.Window.get_screen_size()
     height, width = int(height/1.2), int(width/1.2)
     buttonColor = ("white" if sg.theme_background_color() ==
@@ -22,7 +22,8 @@ def homeLayout():
         [sg.Button("me", font=(defaultFont, 23), button_color=buttonColor, border_width=0, key="home_open_user_profile"),
          sg.Button("find", font=(defaultFont, 23),
                    button_color=buttonColor, border_width=0, key="home_search"),
-         sg.Button("open", font=(defaultFont, 23), button_color=buttonColor, border_width=0, key="home_open_opensub")],
+         sg.Button("open", font=(defaultFont, 23), button_color=buttonColor, border_width=0, key="home_open_opensub"),
+         sg.Button("explore", font=(defaultFont, 23), border_width=0, button_color=buttonColor, key="home_open_explore")],
         [sg.HSep()],
         [sg.Column(
             [*lp.postCardHandler(
@@ -49,7 +50,9 @@ def homeExec(event, values, window):
     elif (event == "home_open_opensub"):
         from src.app.opensub.opensub import opensub
         opensub.start()
-
+    elif (event == "home_open_explore"):
+        from src.app.home.explore.explore import explore
+        explore.start()
     # Dealing with post stuff
     externalFuncs.postFunctionHandler(event, values, window)
 

@@ -9,7 +9,6 @@ def topLayout(subreddit):
     sg.theme(externalFuncs.getTheme())
     buttonColor = ("white" if externalFuncs.isThemeDark() else "black", sg.theme_background_color())
     userDB = externalFuncs.initUserDB()
-    user = userDB["dataTables"].username
 
     topLayout = [
         [sg.Button(image_data=subredditIcon, image_subsample=3, button_color= buttonColor, border_width=0, key="subreddit+top_open_details-" + subreddit ),

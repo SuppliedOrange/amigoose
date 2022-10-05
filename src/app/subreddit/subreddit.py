@@ -17,7 +17,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     userDB = externalFuncs.initUserDB()
     icon = imf.convertToB64( imf.convertToPFP( imf.getIcon(subreddit) ,(200,200), cacheOutput=(subreddit, "subreddit")) )
     date_created = datetime.utcfromtimestamp( userDB["postData"].getSubreddits(subreddit, "dateCreated")[0] ).strftime("%d/%m/%Y")
-    owner = userDB["postData"].getSubreddits(subreddit, "owner")[0]
+    owner = userDB["postData"].getSubreddits(subreddit, "owner")[0].lower()
     description = userDB["postData"].getSubreddits(subreddit, "description")[0]
     members = userDB["userData"].getSubredditMembers(subreddit)[0]
 
@@ -95,7 +95,7 @@ def subredditWatch(window):
     
     event = externalFuncs.sanitizeEvent(event)
 
-    method,value = event.split("-") if event and "-" in event else (None,None)
+    method,value = event.split("-") if event and "-" in event and len(event.split("-")) == 2 else (None,None)
 
     if value == window.metadata["subreddit"]:
         EventName = event
@@ -161,6 +161,9 @@ def subredditWatch(window):
         window.close()
         createPostTitle.start(argsWindow=createPostTitleArgs)
         return (True, True)
+    
+    # Dealing with post stuff
+    externalFuncs.postFunctionHandler(event, values, window)
 
     v = (event,values,window)
 
