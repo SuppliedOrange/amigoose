@@ -138,7 +138,7 @@ comments = Format(
     author varchar(255) NOT NULL,
     post_uuid varchar(255),
     uuid varchar(255) UNIQUE,
-    content varchar(255) DEFAULT "",
+    content varchar(1000) DEFAULT "",
     dateCreated int unsigned,
     FOREIGN KEY (post_uuid) REFERENCES postmaps(uuid)
     """,

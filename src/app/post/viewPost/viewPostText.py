@@ -16,14 +16,14 @@ def viewPostTextWindow(postIdentity, parent=None):
     w,h = sg.Window.get_screen_size()
     w,h = int(w/10), int(h/len(post["body"])//10)
 
-    authorpfp = imageFuncs.convertToPFP(imageFuncs.getPFP(post["author"]) or externalFuncs.getPath("./assets/amigoose_assets/defaultGoose.png"), (75,75))
+    authorpfp = imageFuncs.convertToB64( imageFuncs.convertToPFP(imageFuncs.getPFP(post["author"]) or externalFuncs.getPath("./assets/amigoose_assets/defaultGoose.png"), (75,75)) )
 
     sg.theme(externalFuncs.getTheme())
 
     headerLayout = [
         [sg.Button(image_filename=back_button, image_subsample=12, button_color= buttonColor, border_width=0, key="viewPostTextClose_" + postIdentity)],
         [sg.Text(post["title"], font=(defaultFont,30)), sg.Push(),
-         sg.Button(image_filename=authorpfp,button_color=buttonColor, border_width=0, key="viewPostTextOpenAuthor_" + post["author"])],
+         sg.Button(image_data=authorpfp,button_color=buttonColor, border_width=0, key="viewPostTextOpenAuthor_" + post["author"])],
     ]
 
     actionButtonLayout = [
@@ -32,7 +32,7 @@ def viewPostTextWindow(postIdentity, parent=None):
         sg.Text(str(userDB["postData"].getHonks(post["uuid"])), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + postIdentity)
     ]
 
-    if (userDB["dataTables"].username == post["author"]):
+    if (userDB["dataTables"].username.lower() == post["author"].lower()):
         from random import choice
         delete_quotes = ["Deletus.", "Commit Unpost.", "Unalive post.", "L Post? Click.", "Dileet Post"]
         actionButtonLayout.extend([

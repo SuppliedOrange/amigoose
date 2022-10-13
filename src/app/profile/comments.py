@@ -10,6 +10,7 @@ def commentsLayout(username):
     headerLayout = [
         [sg.Button(image_filename=profile_button, button_color=buttonColor, border_width=0, key="profile+comments_open_profile-" + username), sg.Push(),
         sg.Button(image_filename=posts_button, image_subsample=9, button_color=buttonColor, border_width=0, key="profile+comments_open_posts-" + username)],
+        [sg.HSep()]
     ]
     
     commentsLayout = [

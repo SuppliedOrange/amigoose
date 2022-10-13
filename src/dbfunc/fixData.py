@@ -1,7 +1,7 @@
 # Automatically creates all necessary SQL databases and certain data required for the app.
 
 from .formats import formats
-from . import sqlfunc
+from . import sqlfunc, csvfunc
 from os import name as osname
 
 def fixData():
@@ -36,3 +36,6 @@ def fixData():
 
     if (not sqlfunc.getData("loginState",(),"username")):
         sqlfunc.insertData('loginState',('',)) # Currently logged in user
+    
+    # Fixing CSV files for blocked users
+    csvfunc.initFile()

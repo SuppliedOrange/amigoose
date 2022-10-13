@@ -87,7 +87,10 @@ def createPostImageWatch(window):
             userDB["postData"].createPostMap(AUTHOR, SUBREDDIT, POST_ID, IMAGE_PATH, TIMENOW)
 
             window.close()
-            sg.popup_ok("Aight done. now link em to the post.")
+
+            postIdentity = AUTHOR + "-" + POST_ID + "-" + SUBREDDIT
+            from src.app.post.viewPost.viewPostImage import viewPostImage
+            viewPostImage.start(postIdentity)
             return (True, True)
 
 createPostImage = externalFuncs.WinElement(createPostImageWatch, window=createPostImageWindow)

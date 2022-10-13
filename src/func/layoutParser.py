@@ -75,7 +75,7 @@ def getSubredditsByTag(tag):
         inSubreddit = subreddit in userDB["userData"].getSubredditData("subreddit")
 
         return {
-            "actionProtocol": "search_leave_subreddit-" if inSubreddit else "search_join_subreddit-",
+            "actionProtocol": "explore_leave_subreddit-" if inSubreddit else "explore_join_subreddit-",
             "actionColor": ("white","red") if inSubreddit else ("white", "green"),
             "subredditColor":("white", sg.theme_background_color()) if externalFuncs.isThemeDark() else ("black", sg.theme_background_color()),
             "actionText": "Leave" if inSubreddit else "Join"
@@ -235,11 +235,7 @@ def videoPostCard(*params):
 
 def postCardHandler(*uuids):
     cards = []
-    defaultFont = externalFuncs.getDefaultFont()
-    # Make a default message incase there are no posts. Ask them to join a gaggle.
-    noPostsAlert = [
-            [sg.Text("Join a Gaggle to see posts!\nUse the explore feature to get started", font=(defaultFont, 20), text_color="red")]
-        ]
+    
     for uuid in uuids:
         id = externalFuncs.getPostIdentity(uuid)
         postType = externalFuncs.getPostFileData(id)["type"]
@@ -251,7 +247,7 @@ def postCardHandler(*uuids):
         elif postType == "video":
             cards.extend(videoPostCard(uuid))
 
-    return cards or noPostsAlert
+    return cards
 
 def getComments(uuid=None, username=None, mode="post"):  
     # mode = post | profile

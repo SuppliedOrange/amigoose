@@ -67,14 +67,15 @@ def convertToPFP(imagePath, resize: tuple, cacheOutput: tuple = (), allowCacheUs
 def cropImageIntoSquare(imagePath):
     image = Image.open(imagePath)
     width, height = image.size
+    fp = externalFuncs.getPath("./assets/remote_assets/remotePFP.png")
     if width == height:
-        return image
+        image.save(Path(fp))
+        return fp
     offset  = int(abs(height-width)/2)
     if width>height:
         image = image.crop([offset,0,width-offset,height])
     else:
         image = image.crop([0,offset,width,height-offset])
-    fp = externalFuncs.getPath("./assets/remote_assets/remotePFP.png")
     image.save(Path(fp))
     return fp
 

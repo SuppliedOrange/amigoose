@@ -47,7 +47,7 @@ def createSubredditWatch(window):
             sg.popup_quick_message("Not an image file! Honk!")
         else:
             newImage = externalFuncs.getPath(fileName)
-            window[event].update( image_data=imageFuncs.convertToB64(imageFuncs.convertToPFP(newImage, (200,200))) )
+            window[event].update( image_data=imageFuncs.convertToB64( imageFuncs.convertToPFP(  imageFuncs.cropImageIntoSquare( newImage ), (200,200), allowCacheUsage=False) ) )
             window[event].metadata = newImage
             sg.popup_quick_message("Updated Gaggle icon!")
     

@@ -71,7 +71,9 @@ def createPostTextWatch(window):
             userDB["postData"].createPostMap(AUTHOR, SUBREDDIT, POST_ID, None, TIMENOW)
 
             window.close()
-            sg.popup_ok("Aight done. now link em to the post.")
+            postIdentity = AUTHOR + "-" + POST_ID + "-" + SUBREDDIT
+            from src.app.post.viewPost.viewPostText import viewPostText
+            viewPostText.start(postIdentity)
             return (True, True)
 
     if window and values:

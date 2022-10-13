@@ -23,7 +23,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
 
     sg.theme(externalFuncs.getTheme())
 
-    isNotOwner = (userDB["dataTables"].username != owner)
+    isNotOwner = (userDB["dataTables"].username.lower() != owner)
 
     # If the user is not the owner of the subreddit, load an image of the subreddit icon for them, otherwise load a button with the subreddit icon
     iconButton = sg.Image(data=icon) if isNotOwner else sg.Button(image_data=icon,button_color=buttonColor, border_width=0, key="subreddit_update_icon-" + subreddit)
@@ -31,7 +31,7 @@ def subredditWindow(subreddit,openTab=None,parent=None):
     header = [iconButton, sg.Push(), sg.Text("g/" + subreddit, font=(defaultFont,40))]
 
     # The description is going to be a multiline element, where if the user is not an owner, the multiline is disabled.
-    subreddit_info = [ sg.Multiline(description,disabled=isNotOwner, font=(defaultFont,10), size=(50, 20), background_color="gray" if externalFuncs.isThemeDark() else "white", border_width=0), ]
+    subreddit_info = [ sg.Multiline(description,disabled=isNotOwner, font=(defaultFont,10), size=(50, 20), background_color="gray" if externalFuncs.isThemeDark() else "white", border_width=0, key="subreddit_description_box"),]
     description = [sg.Frame("About", [subreddit_info])]
 
     if not isNotOwner:
@@ -126,6 +126,12 @@ def subredditWatch(window):
             newPFP = imf.convertToPFP(imf.saveAsPFP(fileName, window.metadata["subreddit"], subreddit=True), (200,200), cacheOutput=(window.metadata["subreddit"], "subreddit"))
             window[EventName].update(image_data=imf.convertToB64(newPFP))
             sg.popup_quick_message("Updated subreddit icon!")
+    
+    elif (event == "subreddit_update_description"):
+        userDB = externalFuncs.initUserDB()
+        nb = values["subreddit_description_box"]
+        userDB["postData"].updateSubreddits(window.metadata["subreddit"], "description", nb)
+        sg.popup_quick_message("Updated!")
         
     elif (event == "subreddit_join_subreddit"):
         userDB = externalFuncs.initUserDB()

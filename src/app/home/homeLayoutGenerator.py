@@ -15,6 +15,12 @@ def homeLayout():
                    "#19232D" else "black", sg.theme_background_color())
     user = userDB["dataTables"].username
     subredditsForUser = userDB["userData"].getSubredditData("subreddit", user)
+    noPostsAlert = [
+            [sg.Text("Join a Gaggle to see posts!\nUse the explore feature to get started", font=(defaultFont, 20), text_color="red")]
+        ]
+    postCards = lp.postCardHandler(
+                *[x[2] for x in userDB["postData"].getPostsBySubredditList(subreddits=subredditsForUser)]
+            ) or noPostsAlert
 
     homeLayout = [
         [sg.Image(amigoose_logo, subsample=10), sg.Push(), sg.Button(image_filename=settings_icon, image_subsample=8,
@@ -26,9 +32,7 @@ def homeLayout():
          sg.Button("explore", font=(defaultFont, 23), border_width=0, button_color=buttonColor, key="home_open_explore")],
         [sg.HSep()],
         [sg.Column(
-            [*lp.postCardHandler(
-                *[x[2] for x in userDB["postData"].getPostsBySubredditList(subreddits=subredditsForUser)]
-            )],
+            [ *postCards ],
             scrollable=True, vertical_scroll_only=True, expand_x=True, expand_y=True, sbar_relief=sg.RELIEF_FLAT
         )]
     ]

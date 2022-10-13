@@ -387,21 +387,31 @@ class postData(dataTables):
         return honks[0]
 
     def toggleHonk(self, honker, uuid, subreddit):
-        # Note that "author" here is the person who initiated the honk. The UUID and Subreddit is the post's data.
+        
+        # Note that "honker" here is the person who initiated the honk. The UUID and Subreddit is the post's data.
         sf.selectDB("postData")
-        isHonked = sf.checkMatch(
-            "honkLogs", ("author", honker), ("uuid", uuid))
+        isHonked = sf.checkMatch("honkLogs", ("author", honker), ("uuid", uuid))
         honks = self.getHonks(uuid)
+        post_author = sf.getData("postmaps", ("uuid", uuid), "author")[0]
+        newHonks = honks - 1 if isHonked else honks + 1
 
         if not isHonked:
+            # Add a log to honklogs, update respective post's map with the number of honks.
             sf.insertData("honkLogs", (honker, subreddit, uuid))
-            sf.updateData("postmaps", "honks", honks + 1, ("uuid", uuid))
+            sf.updateData("postmaps", "honks", newHonks, ("uuid", uuid))
+            # Update the same on the author's profiledata.
+            sf.selectDB("userData")
+            sf.updateData("profiledata", "honks", newHonks, ("username", post_author))
             return True  # Inserted honk
         else:
             # Add a log to honklogs, update respective post's map with the number of honks.
             sf.deleteData("honkLogs", ("author", honker), ("uuid", uuid))
-            sf.updateData("postmaps", "honks", honks - 1, ("uuid", uuid))
+            sf.updateData("postmaps", "honks", newHonks, ("uuid", uuid))
+            # Update the same on the author's profiledata. This was so unnecessary. I don't like this but it's too late to change the entire system.
+            sf.selectDB("userData")
+            sf.updateData("profiledata", "honks", newHonks, ("username", post_author))
             return False  # Removed honk
+        
 
     # Comment stuff
 

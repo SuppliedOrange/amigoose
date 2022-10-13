@@ -86,7 +86,9 @@ def createPostVideoWatch(window):
             userDB["postData"].createPostMap(AUTHOR, SUBREDDIT, POST_ID, VIDEO_PATH, TIMENOW)
 
             window.close()
-            sg.popup_ok("Aight done. now link em to the post.")
+            postIdentity = AUTHOR + "-" + POST_ID + "-" + SUBREDDIT
+            from src.app.post.viewPost.viewPostVideo import viewPostVideo
+            viewPostVideo.start(postIdentity)
             return (True, True)
 
 createPostVideo = externalFuncs.WinElement(createPostVideoWatch, window=createPostVideoWindow)

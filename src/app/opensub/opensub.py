@@ -21,7 +21,7 @@ def opensubWindow():
 
     sg.theme(externalFuncs.getTheme())
 
-    profileLayout = [
+    opensubLayout = [
         [sg.Button(image_filename=back_button, image_subsample=9, button_color= buttonColor, border_width=0, key="opensub_return_home")],
         [sg.Push(), sg.Text('Find a gaggle by name',justification="c", font=(defaultFont,15)), sg.Push()],
         [sg.Push(), sg.Input(size=(inputWidth, 20), enable_events=True, focus=True, key='opensub_query'), sg.Push()],
@@ -31,7 +31,7 @@ def opensubWindow():
         [sg.VPush()]
     ]
 
-    window = sg.Window("Open Gaggle" ,profileLayout.copy(),size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo())
+    window = sg.Window("Open Gaggle" ,opensubLayout.copy(),size=(width,height), resizable=True, alpha_channel=userDB["settings"].getPreference("opacity"),icon=imageFuncs.getLogo())
     list_element = window.Element('opensub_box')
     window.finalize()
     window["opensub_query"].bind("<Down>","-pressed_down")

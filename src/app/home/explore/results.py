@@ -41,5 +41,15 @@ def resultsWatch(window):
         window.close()
         subreddit.start(argsWindow=argsForSubreddit)
         return (True, True)
+    
+    elif (method == "explore_join_subreddit"):
+        userDB = externalFuncs.initUserDB()
+        userDB["userData"].joinSubreddit(value)
+        window[event].update("Joined", disabled=True, button_color= ("white","green"))
+    
+    elif (method == "explore_leave_subreddit"):
+        userDB = externalFuncs.initUserDB()
+        userDB["userData"].leaveSubreddit(value)
+        window[event].update("Left", disabled=True, button_color = ("white","red"))
 
 results = externalFuncs.WinElement(resultsWatch, window=resultsWindow)

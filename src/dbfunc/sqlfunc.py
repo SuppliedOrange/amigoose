@@ -1,6 +1,6 @@
 import mysql.connector
-from . import formats, dataTables
-formats = formats.formats
+from .formats import formats
+from . import dataTables
 
 db = mysql.connector.connect(
     host="localhost",
@@ -194,7 +194,8 @@ def deleteAccount(username):
 def dropAll():
     """
     Drops every database in formats\n
-    Clears all subreddit tags
+    Clears all subreddit tags\n
+    Don't use this, I don't even know if I did this right.
     """
 
     import os
@@ -205,14 +206,15 @@ def dropAll():
         try:
             executeSQL("DROP DATABASE " + database)
             print("dropped db", database)
-        except:
-            pass
+        except: pass
     print(cursor.rowcount, "records affected")
 
     # Clearing all tags
     from .jsonfunc import updateFile
     updateFile({})
     print("Cleared tags.json")
+
+    # Remove the CSV file too!
 
     def clearFolder(path):
         [f.unlink() for f in Path(path).glob("*.png") if f.is_file()]

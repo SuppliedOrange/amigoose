@@ -29,7 +29,7 @@ def viewPostImageWindow(postIdentity, parent=None):
         sg.Text(str(userDB["postData"].getHonks(post["uuid"])), font=(defaultFont,15), text_color= "yellow" if externalFuncs.isThemeDark() else "blue", key="postHonks_" + postIdentity)
         ]
     
-    if (userDB["dataTables"].username == post["author"]):
+    if (userDB["dataTables"].username.lower() == post["author"].lower()):
         from random import choice
         delete_quotes = ["Deletus.", "Commit Unpost.", "Unalive post.", "Dileet Post"]
         actionButtonLayout.extend([

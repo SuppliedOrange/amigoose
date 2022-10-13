@@ -62,6 +62,9 @@ def profileManagerExec(event,values,window):
     elif (event == "profileManager_create_subreddit"):
         from src.app.settings.createSubreddit.createSubreddit import createSubreddit
         createSubreddit.start()
+    elif (event == "profileManager_block_user"):
+        from src.app.settings.blockUser.blockUser import blockUser
+        blockUser.start()
 
     if ("-" in event):
         method,value = event.split("-")[0], event.split("-")[1]

@@ -90,7 +90,7 @@ def searchWatch(window):
                     Nwindow[Nevent].update("Left", disabled=True, button_color = ("white","red"))
                 
                 elif (method == "search_open_subreddit"):
-                    parent = {"type": "search", "layoutArgs": window["search_query"]}
+                    parent = {"type": "search", "layoutArgs": values["search_query"]}
                     subredditLayoutArgs = (value,None,parent)
                     from src.app.subreddit.subreddit import subreddit
                     Nwindow.close()

@@ -3,6 +3,7 @@
 import os
 from src.dbfunc import sqlfunc, dataTables
 import PySimpleGUI as sg
+from sys import exit
 
 def moveTab(window:sg.Window,tabgroup:str,fromTab:str,toTab:str):
     """
@@ -21,10 +22,8 @@ def getFonts() -> list[str]:
     """
     Get all current installed fonts on the user's computer.
     """
-    from tkinter import font
-    import tkinter
-    root = tkinter.Tk()
-    fonts = list(font.families())
+    root = sg.tk.Tk()
+    fonts = list(sg.tk.font.families())
     root.destroy()
     return fonts
 
@@ -148,7 +147,7 @@ def subredditNameValidator(name:str) -> tuple:
     
     return (True,)
 
-def getWindowOpacity() -> str:
+def getWindowOpacity() -> int:
     """ Gets the user's preference of window opacity """
     userDB = initUserDB()
     return userDB["settings"].getPreference("opacity")
@@ -159,32 +158,17 @@ def sanitizeEvent(event:str, allowNumbers=False) -> str:
     This removes those numbers by selecting only the alphabets, - and _ characters.\n
     Event - Event to check - String
     """
-    # There was actually an easier fix to this. I could've just appended a unique code to the end of each event and split that out. This was an unnecessary compromise.
-    # However, at the time of writing this comment, it is too late to make the changes needed. I hope someday I'll be an actual, better programmer and write better code.
-
     import re
     if not event: return None
 
+    # I don't even remember making this regex and have no idea why I made it. But all I know is if I remove it, the code breaks. This must stay :)
+
     if (allowNumbers):
         if re.search("([a-zA-Z0-9_\+-]+)", event): return re.search("([a-zA-Z0-9_\+-]+)", event).group(1)
-
-    # So instead of this hard-core search, what if we just checked if the last 2 characters were numbers and removed them if they were?
-    #if re.search("([a-zA-Z_\+-]+)", event): return re.search("([a-zA-Z_\+-]+)", event).group(1)
-
-    # Using the above mentioned hack,
-    lastChar = event[-1]
-    try:
-        int(lastChar)
-        event = event[:-1]
-    except: lastChar = None
-
-    if lastChar:
-        try:
-            int(event[-1])
-            event = event[-1]
-        except: pass
     
-    return "".join(event)
+    from string import digits
+    event = event.rstrip(digits)
+    return event
 
 def getBasename(filePath:str) -> str:
     """
@@ -317,7 +301,7 @@ def prettyDate(time:int):
     """
     Get a pretty string like 'an hour ago', 'Yesterday', '3 months ago' etc from a UNIX/EPOCH integer,\n
 
-    Thanks to https://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python/\n
+    Thanks to https://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python/ \n
     The alternative was to use the "arrow" or "humanize" packages but I didn't want to clutter my deps\n
 
     time - Integer - UNIX/EPOCH integer of the time.
@@ -367,7 +351,7 @@ class WinElement():
 
     + .stop() -> Stops the window.\n
     Arguments: \n
-    noKill | restart [ Stops the window but not it's watcher. Restarts the window. ]\n
+    noKill | restart [ Stops the window but not it's watcher. Restart restarts the window. ]\n
     argsWin [ Arguments for the next time the window restarts, if it does. ]\n
 
     """
