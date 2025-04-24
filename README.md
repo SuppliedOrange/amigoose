@@ -1,6 +1,5 @@
 # amigoose
 A social media built with PySimpleGUI
 
-its not complete but its not like i care anyway
-
-fork it, make it cooler, publish as your own, sell it
+its incomplete because i made this for a school project but the teachers ended up not caring.
+but oh well, might as well put this relic up on github because why not.
