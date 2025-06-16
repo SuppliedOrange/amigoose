@@ -1,4 +1,4 @@
-﻿cryptography==38.0.1
+﻿cryptography==45.0.4
 mysql-connector-python==8.0.31
 opencv-python==4.6.0.66
 Pillow==9.3.0
